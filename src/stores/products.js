@@ -87,6 +87,23 @@ export const useProductsStore = defineStore('products', {
             await deleteDoc(doc(db, 'products', id))
             this.products = this.products.filter((p) => p.id !== id)
         },
+        async decrementVariantStock(productId, variantId, quantity) {
+            const product = this.products.find((p) => p.id === productId)
+            if (!product) return
+            const updatedVariants = product.variants.map((v) =>
+                v.id === variantId ? { ...v, stock: Math.max(0, (v.stock ?? 0) - quantity) } : v
+            )
+            await updateDoc(doc(db, 'products', productId), {
+                variants: updatedVariants.map(({ id, optionValues, price, stock, imagePath }) => ({
+                    id,
+                    optionValues,
+                    price,
+                    stock,
+                    imagePath: imagePath || null,
+                })),
+            })
+            product.variants = updatedVariants
+        },
         async uploadProductImage(file) {
             const path = `products/${Date.now()}-${file.name}`
             await uploadBytes(storageRef(storage, path), file)

@@ -59,6 +59,11 @@ export const useOrdersStore = defineStore('orders', {
                 status: 'pending',
                 createdAt: serverTimestamp(),
             })
+            await Promise.all(
+                cartStore.items.map((item) =>
+                    productsStore.decrementVariantStock(item.productId, item.variantId, item.quantity)
+                )
+            )
             cartStore.clearCart()
         },
         async updateOrderStatus(orderId, status) {
