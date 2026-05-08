@@ -138,26 +138,28 @@
 <script>
 import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
+import { CATEGORIES } from '../constants/categories'
 
 export default {
     name: 'HomeView',
     data() {
         return {
             activeCategory: 'ทั้งหมด',
-            categories: [
-                'ทั้งหมด',
-                'ถุงมือใช้แล้วทิ้ง',
-                'ถุงมือเฉพาะทาง',
-                'อุปกรณ์ป้องกันไฟฟ้าสถิต'
-            ]
         }
     },
     mounted() {
         useProductsStore().getProducts()
     },
     computed: {
-        products() {
+        allActiveProducts() {
             return useProductsStore().products.filter((p) => p.isActive)
+        },
+        categories() {
+            return ['ทั้งหมด', ...CATEGORIES]
+        },
+        products() {
+            if (this.activeCategory === 'ทั้งหมด') return this.allActiveProducts
+            return this.allActiveProducts.filter((p) => p.category === this.activeCategory)
         },
         loading() {
             return useProductsStore().loading

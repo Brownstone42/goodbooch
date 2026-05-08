@@ -39,6 +39,7 @@ export const useProductsStore = defineStore('products', {
                         )
                         data.displayPrice = data.variants[0].price
                         data.imageUrl = data.coverImageUrl || data.variants.find((v) => v.imageUrl)?.imageUrl || null
+                        data.category = data.category || ''
                         return data
                     })
                 )
@@ -48,10 +49,11 @@ export const useProductsStore = defineStore('products', {
                 this.loading = false
             }
         },
-        async createProduct({ title, description, isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
+        async createProduct({ title, description, category = '', isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
             await addDoc(collection(db, 'products'), {
                 title,
                 description,
+                category,
                 isActive,
                 coverImagePath,
                 optionGroups,
@@ -66,10 +68,11 @@ export const useProductsStore = defineStore('products', {
             })
             await this.getProducts()
         },
-        async updateProduct(id, { title, description, isActive, coverImagePath, optionGroups = [], variants = [] }) {
+        async updateProduct(id, { title, description, category = '', isActive, coverImagePath, optionGroups = [], variants = [] }) {
             await updateDoc(doc(db, 'products', id), {
                 title,
                 description,
+                category,
                 isActive,
                 coverImagePath: coverImagePath || null,
                 optionGroups,

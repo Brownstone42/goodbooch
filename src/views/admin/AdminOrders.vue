@@ -43,8 +43,20 @@
                                         <p class="text-xs text-slate-400 mt-0.5 max-w-[180px] truncate">{{ order.address }}</p>
                                     </td>
                                     <td class="px-8 py-5">
-                                        <div v-for="item in order.items" :key="item.id" class="text-sm text-slate-600 leading-relaxed">
-                                            {{ item.title }}{{ item.variantLabel ? ' (' + item.variantLabel + ')' : '' }} × {{ item.quantity }}
+                                        <div class="flex flex-col gap-3 min-w-[320px]">
+                                            <div v-for="(item, index) in order.items" :key="item.key || index" class="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                                                <div class="w-14 h-14 rounded-lg overflow-hidden bg-slate-50 shrink-0 border border-slate-100 flex items-center justify-center">
+                                                    <img :src="item.imageUrl || '/images/mask.png'" class="w-full h-full object-cover" />
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex justify-between items-start gap-2">
+                                                        <p class="font-bold text-slate-900 text-sm truncate" :title="item.title">{{ item.title }}</p>
+                                                        <span class="font-bold text-[#005c3d] text-sm bg-[#005c3d]/10 px-2 py-0.5 rounded-lg whitespace-nowrap">× {{ item.quantity }}</span>
+                                                    </div>
+                                                    <p v-if="item.variantLabel" class="text-xs font-medium text-slate-500 mt-0.5 truncate bg-slate-100 inline-block px-2 py-0.5 rounded-md">{{ item.variantLabel }}</p>
+                                                    <p class="text-xs font-bold text-slate-700 mt-1.5">฿{{ (item.price * item.quantity).toFixed(2) }} <span class="text-[10px] text-slate-400 font-normal ml-1">(฿{{ item.price.toFixed(2) }} ea)</span></p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="px-8 py-5">

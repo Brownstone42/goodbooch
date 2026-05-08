@@ -138,6 +138,14 @@
                                 <textarea v-model="form.description" rows="4" placeholder="Enter product description..." class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent resize-none transition-all"></textarea>
                             </div>
 
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Category</label>
+                                <select v-model="form.category" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent transition-all">
+                                    <option value="">— No category —</option>
+                                    <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                            </div>
+
                             <div class="flex items-center gap-3 pt-2">
                                 <button type="button" @click="form.isActive = !form.isActive" :class="['relative w-12 h-6 rounded-full transition-colors focus:outline-none', form.isActive ? 'bg-[#005c3d]' : 'bg-slate-300']">
                                     <span :class="['absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform', form.isActive ? 'translate-x-6' : 'translate-x-0']"></span>
@@ -281,6 +289,7 @@
 
 <script>
 import { useProductsStore } from '../../stores/products'
+import { CATEGORIES } from '../../constants/categories'
 
 export default {
     name: 'ProductTable',
@@ -295,6 +304,7 @@ export default {
             form: {
                 title: '',
                 description: '',
+                category: '',
                 isActive: true,
                 optionGroups: [],
                 variants: [{ id: 'default', optionValues: [], price: null, stock: 0, imageFile: null, imagePreview: null, imagePath: null, imageUrl: null }],
@@ -304,6 +314,9 @@ export default {
     computed: {
         products() {
             return useProductsStore().products
+        },
+        categoryOptions() {
+            return CATEGORIES
         },
         productsLoading() {
             return useProductsStore().loading
@@ -409,6 +422,7 @@ export default {
             this.form = {
                 title: product.title || '',
                 description: product.description || '',
+                category: product.category || '',
                 isActive: product.isActive ?? true,
                 optionGroups: (product.optionGroups || []).map(g => ({
                     name: g.name,
@@ -469,6 +483,7 @@ export default {
                 const payload = {
                     title: this.form.title,
                     description: this.form.description,
+                    category: this.form.category,
                     isActive: this.form.isActive,
                     coverImagePath,
                     optionGroups,
@@ -498,6 +513,7 @@ export default {
             this.form = {
                 title: '',
                 description: '',
+                category: '',
                 isActive: true,
                 optionGroups: [],
                 variants: [{ id: 'default', optionValues: [], price: null, stock: 0, imageFile: null, imagePreview: null, imagePath: null, imageUrl: null }],
