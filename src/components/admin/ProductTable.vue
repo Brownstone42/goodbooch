@@ -5,15 +5,28 @@
                 <h2 class="text-xl font-bold text-slate-900">Products</h2>
                 <p class="text-sm text-slate-500 mt-1">Manage your store products and stock.</p>
             </div>
-            <button
-                @click="showForm = true"
-                class="bg-[#005c3d] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#004d33] transition-all transform active:scale-95"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Add Product
-            </button>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        v-model="search"
+                        type="text"
+                        placeholder="Search products..."
+                        class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all w-56"
+                    />
+                </div>
+                <button
+                    @click="showForm = true"
+                    class="bg-[#005c3d] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#004d33] transition-all transform active:scale-95"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Product
+                </button>
+            </div>
         </div>
 
         <div v-if="error" class="mx-8 mt-6 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-5 py-3 flex items-center justify-between">
@@ -297,6 +310,7 @@ export default {
         return {
             showForm: false,
             loading: false,
+            search: '',
             editingProduct: null,
             coverImageFile: null,
             coverImagePreview: null,
@@ -313,7 +327,10 @@ export default {
     },
     computed: {
         products() {
-            return useProductsStore().products
+            const all = useProductsStore().products
+            if (!this.search.trim()) return all
+            const q = this.search.toLowerCase()
+            return all.filter((p) => p.title.toLowerCase().includes(q))
         },
         categoryOptions() {
             return CATEGORIES

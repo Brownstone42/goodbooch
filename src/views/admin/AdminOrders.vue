@@ -7,9 +7,22 @@
 
             <main class="p-8 flex-1">
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="px-8 py-6 border-b border-slate-200">
-                        <h2 class="text-xl font-bold text-slate-900">Orders</h2>
-                        <p class="text-sm text-slate-500 mt-1">Manage and update customer orders.</p>
+                    <div class="px-8 py-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Orders</h2>
+                            <p class="text-sm text-slate-500 mt-1">Manage and update customer orders.</p>
+                        </div>
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input
+                                v-model="search"
+                                type="text"
+                                placeholder="Search orders..."
+                                class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all w-56"
+                            />
+                        </div>
                     </div>
 
                     <div v-if="error" class="mx-8 mt-6 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-5 py-3 flex items-center justify-between">
@@ -106,9 +119,21 @@ export default {
         AdminSidebar,
         AdminHeader,
     },
+    data() {
+        return {
+            search: '',
+        }
+    },
     computed: {
         orders() {
-            return useOrdersStore().orders
+            const all = useOrdersStore().orders
+            if (!this.search.trim()) return all
+            const q = this.search.toLowerCase()
+            return all.filter((o) =>
+                o.customerName?.toLowerCase().includes(q) ||
+                o.phone?.toLowerCase().includes(q) ||
+                o.items?.some((i) => i.title?.toLowerCase().includes(q))
+            )
         },
         loading() {
             return useOrdersStore().loading

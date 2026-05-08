@@ -1,19 +1,6 @@
 <template>
     <header class="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-40">
-        <div class="flex items-center gap-4 flex-1">
-            <div class="relative w-full max-w-md group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#005c3d] transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                <input 
-                    type="text" 
-                    placeholder="Search products, orders..." 
-                    class="block w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all duration-200"
-                />
-            </div>
-        </div>
+        <div class="flex-1"></div>
         
         <div class="flex items-center gap-6">
             <button class="relative text-slate-400 hover:text-[#005c3d] transition-colors">
