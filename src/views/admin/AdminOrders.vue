@@ -32,7 +32,7 @@
                                     </td>
                                     <td class="px-8 py-5">
                                         <div v-for="item in order.items" :key="item.id" class="text-sm text-slate-600 leading-relaxed">
-                                            {{ item.title }} × {{ item.quantity }}
+                                            {{ item.title }}{{ item.variantLabel ? ' (' + item.variantLabel + ')' : '' }} × {{ item.quantity }}
                                         </div>
                                     </td>
                                     <td class="px-8 py-5">

@@ -23,7 +23,7 @@
                         <th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Product</th>
                         <th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                         <th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Price</th>
-                        <th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Stock</th>
+                        <th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Variants</th>
                         <th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -49,18 +49,10 @@
                             </span>
                         </td>
                         <td class="px-8 py-5">
-                            <span class="font-bold text-slate-900">฿{{ product.price.toFixed(2) }}</span>
+                            <span class="font-bold text-slate-900">฿{{ product.displayPrice.toFixed(2) }}</span>
                         </td>
                         <td class="px-8 py-5">
-                            <div class="flex items-center gap-2">
-                                <div class="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                    <div :class="[
-                                        'h-full rounded-full',
-                                        product.isActive ? 'w-2/3 bg-[#005c3d]' : 'w-0'
-                                    ]"></div>
-                                </div>
-                                <span class="text-xs font-bold text-slate-600">{{ product.isActive ? 42 : 0 }}</span>
-                            </div>
+                            <span class="text-xs font-bold text-slate-600">{{ product.variants.length }} variant{{ product.variants.length === 1 ? '' : 's' }}</span>
                         </td>
                         <td class="px-8 py-5 text-right sm:text-left">
                             <div class="flex items-center gap-2">
@@ -98,11 +90,11 @@
             </div>
         </div>
 
-        <!-- Add Product Modal -->
+        <!-- Add / Edit Product Modal -->
         <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/40" @click="closeForm"></div>
-            <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
-                <div class="flex items-center justify-between mb-6">
+            <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+                <div class="px-8 pt-8 pb-4 flex items-center justify-between sticky top-0 bg-white z-10 border-b border-slate-100">
                     <h3 class="text-xl font-bold text-slate-900">{{ editingProduct ? 'Edit Product' : 'Add Product' }}</h3>
                     <button @click="closeForm" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,7 +103,7 @@
                     </button>
                 </div>
 
-                <form @submit.prevent="submitForm" class="space-y-5">
+                <form @submit.prevent="submitForm" class="px-8 py-6 space-y-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Title</label>
                         <input
@@ -134,24 +126,11 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Price (฿)</label>
-                        <input
-                            v-model.number="form.price"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent"
-                            placeholder="0.00"
-                        />
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Image</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Cover Image</label>
                         <input
                             type="file"
                             accept="image/*"
-                            @change="imageFile = $event.target.files[0]"
+                            @change="coverImageFile = $event.target.files[0]"
                             class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#005c3d] file:text-white"
                         />
                     </div>
@@ -171,6 +150,76 @@
                             ]"></span>
                         </button>
                         <span class="text-sm font-semibold text-slate-700">Active</span>
+                    </div>
+
+                    <!-- Option Groups -->
+                    <div class="border-t border-slate-100 pt-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-semibold text-slate-700">Options</label>
+                            <button
+                                type="button"
+                                @click="addOptionGroup"
+                                class="text-xs font-semibold text-[#005c3d] hover:underline"
+                            >+ Add Option</button>
+                        </div>
+                        <div v-for="(group, gi) in form.optionGroups" :key="gi" class="flex gap-2 mb-2">
+                            <input
+                                v-model="group.name"
+                                type="text"
+                                placeholder="Name (e.g. Size)"
+                                class="w-28 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d]"
+                            />
+                            <input
+                                v-model="group.optionsText"
+                                type="text"
+                                placeholder="S, M, L"
+                                class="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d]"
+                            />
+                            <button type="button" @click="removeOptionGroup(gi)" class="p-2 text-slate-400 hover:text-red-500 rounded-lg transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <button
+                            v-if="form.optionGroups.length > 0"
+                            type="button"
+                            @click="generateVariants"
+                            class="mt-1 text-xs font-semibold text-white bg-slate-600 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
+                        >Generate Variants</button>
+                    </div>
+
+                    <!-- Variants Pricing -->
+                    <div v-if="form.variants.length > 0">
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">Pricing &amp; Stock</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider pb-1">
+                                <span class="flex-1">Variant</span>
+                                <span class="w-24 text-center">Price (฿)</span>
+                                <span class="w-20 text-center">Stock</span>
+                            </div>
+                            <div v-for="(variant, vi) in form.variants" :key="vi" class="flex items-center gap-2">
+                                <span class="text-sm text-slate-700 flex-1 min-w-0 truncate font-medium">
+                                    {{ variant.optionValues.length > 0 ? variant.optionValues.join(' / ') : 'Default' }}
+                                </span>
+                                <input
+                                    v-model.number="variant.price"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    required
+                                    placeholder="0.00"
+                                    class="w-24 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] text-right"
+                                />
+                                <input
+                                    v-model.number="variant.stock"
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    class="w-20 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] text-right"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex gap-3 pt-2">
@@ -205,12 +254,13 @@ export default {
             showForm: false,
             loading: false,
             editingProduct: null,
-            imageFile: null,
+            coverImageFile: null,
             form: {
                 title: '',
                 description: '',
-                price: null,
                 isActive: true,
+                optionGroups: [],
+                variants: [{ id: 'default', optionValues: [], price: null, stock: 0 }],
             },
         }
     },
@@ -223,13 +273,48 @@ export default {
         useProductsStore().getProducts()
     },
     methods: {
+        addOptionGroup() {
+            this.form.optionGroups.push({ name: '', optionsText: '' })
+        },
+        removeOptionGroup(index) {
+            this.form.optionGroups.splice(index, 1)
+            if (this.form.optionGroups.length === 0) {
+                this.form.variants = [{ id: 'default', optionValues: [], price: null, stock: 0 }]
+            }
+        },
+        generateVariants() {
+            const groups = this.form.optionGroups.map((g) =>
+                g.optionsText.split(',').map((o) => o.trim()).filter(Boolean)
+            )
+            if (groups.some((g) => g.length === 0)) return
+            const combos = groups.reduce(
+                (acc, opts) => acc.flatMap((combo) => opts.map((opt) => [...combo, opt])),
+                [[]]
+            )
+            const existing = {}
+            this.form.variants.forEach((v) => { existing[v.id] = { price: v.price, stock: v.stock } })
+            this.form.variants = combos.map((combo) => {
+                const id = combo.join('_')
+                return { id, optionValues: combo, price: existing[id]?.price ?? null, stock: existing[id]?.stock ?? 0 }
+            })
+        },
         openEdit(product) {
             this.editingProduct = product
             this.form = {
                 title: product.title,
                 description: product.description,
-                price: product.price,
                 isActive: product.isActive,
+                optionGroups: (product.optionGroups || []).map((g) => ({
+                    name: g.name,
+                    optionsText: g.options.join(', '),
+                })),
+                variants: (product.variants || []).map((v) => ({
+                    id: v.id,
+                    optionValues: v.optionValues || [],
+                    price: v.price,
+                    stock: v.stock ?? 0,
+                    imagePath: v.imagePath || null,
+                })),
             }
             this.showForm = true
         },
@@ -239,14 +324,29 @@ export default {
         },
         async submitForm() {
             this.loading = true
-            let imagePath = this.editingProduct ? this.editingProduct.imagePath : null
-            if (this.imageFile) {
-                imagePath = await useProductsStore().uploadProductImage(this.imageFile)
+            const store = useProductsStore()
+            let coverImagePath = this.editingProduct
+                ? (this.editingProduct.coverImagePath || this.editingProduct.imagePath || null)
+                : null
+            if (this.coverImageFile) {
+                coverImagePath = await store.uploadProductImage(this.coverImageFile)
+            }
+            const optionGroups = this.form.optionGroups.map((g) => ({
+                name: g.name,
+                options: g.optionsText.split(',').map((o) => o.trim()).filter(Boolean),
+            }))
+            const payload = {
+                title: this.form.title,
+                description: this.form.description,
+                isActive: this.form.isActive,
+                coverImagePath,
+                optionGroups,
+                variants: this.form.variants,
             }
             if (this.editingProduct) {
-                await useProductsStore().updateProduct(this.editingProduct.id, { ...this.form, imagePath })
+                await store.updateProduct(this.editingProduct.id, payload)
             } else {
-                await useProductsStore().createProduct({ ...this.form, imagePath })
+                await store.createProduct(payload)
             }
             this.loading = false
             this.closeForm()
@@ -254,8 +354,14 @@ export default {
         closeForm() {
             this.showForm = false
             this.editingProduct = null
-            this.imageFile = null
-            this.form = { title: '', description: '', price: null, isActive: true }
+            this.coverImageFile = null
+            this.form = {
+                title: '',
+                description: '',
+                isActive: true,
+                optionGroups: [],
+                variants: [{ id: 'default', optionValues: [], price: null, stock: 0 }],
+            }
         },
     },
 }

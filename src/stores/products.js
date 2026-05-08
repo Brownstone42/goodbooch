@@ -14,28 +14,63 @@ export const useProductsStore = defineStore('products', {
         async getProducts() {
             const snapshot = await getDocs(collection(db, 'products'))
             this.products = await Promise.all(
-                snapshot.docs.map(async (doc) => {
-                    const data = { id: doc.id, ...doc.data() }
-                    if (data.imagePath) {
-                        data.imageUrl = await getDownloadURL(storageRef(storage, data.imagePath))
+                snapshot.docs.map(async (docSnap) => {
+                    const data = { id: docSnap.id, ...docSnap.data() }
+                    const coverPath = data.coverImagePath || data.imagePath
+                    if (coverPath) {
+                        data.coverImageUrl = await getDownloadURL(storageRef(storage, coverPath))
                     }
+                    if (!data.variants || data.variants.length === 0) {
+                        data.variants = [{ id: 'default', optionValues: [], price: data.price ?? 0, stock: 0, imagePath: null }]
+                        data.optionGroups = data.optionGroups || []
+                    }
+                    data.variants = await Promise.all(
+                        data.variants.map(async (v) => {
+                            if (v.imagePath) {
+                                v.imageUrl = await getDownloadURL(storageRef(storage, v.imagePath))
+                            }
+                            return v
+                        })
+                    )
+                    data.displayPrice = data.variants[0].price
+                    data.imageUrl = data.coverImageUrl || data.variants.find((v) => v.imageUrl)?.imageUrl || null
                     return data
                 })
             )
         },
-        async createProduct({ title, description, price, isActive, imagePath = null }) {
+        async createProduct({ title, description, isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
             await addDoc(collection(db, 'products'), {
                 title,
                 description,
-                price,
                 isActive,
-                imagePath,
+                coverImagePath,
+                optionGroups,
+                variants: variants.map(({ id, optionValues, price, stock, imagePath }) => ({
+                    id,
+                    optionValues,
+                    price,
+                    stock,
+                    imagePath: imagePath || null,
+                })),
                 createdAt: serverTimestamp(),
             })
             await this.getProducts()
         },
-        async updateProduct(id, { title, description, price, isActive, imagePath }) {
-            await updateDoc(doc(db, 'products', id), { title, description, price, isActive, imagePath })
+        async updateProduct(id, { title, description, isActive, coverImagePath, optionGroups = [], variants = [] }) {
+            await updateDoc(doc(db, 'products', id), {
+                title,
+                description,
+                isActive,
+                coverImagePath: coverImagePath || null,
+                optionGroups,
+                variants: variants.map(({ id: vid, optionValues, price, stock, imagePath }) => ({
+                    id: vid,
+                    optionValues,
+                    price,
+                    stock,
+                    imagePath: imagePath || null,
+                })),
+            })
             await this.getProducts()
         },
         async deleteProduct(id) {

@@ -22,7 +22,10 @@ export const useOrdersStore = defineStore('orders', {
                 address,
                 note,
                 items: cartStore.items.map((item) => ({
-                    id: item.id,
+                    id: item.key,
+                    productId: item.productId,
+                    variantId: item.variantId,
+                    variantLabel: item.variantLabel,
                     title: item.title,
                     price: item.price,
                     quantity: item.quantity,

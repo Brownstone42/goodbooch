@@ -10,7 +10,7 @@
         <div v-else>
             <div
                 v-for="item in items"
-                :key="item.id"
+                :key="item.key"
                 class="flex items-center gap-3 py-4 border-b border-gray-100"
             >
                 <img
@@ -20,10 +20,11 @@
                 />
                 <div class="flex-1 min-w-0">
                     <p class="font-medium text-sm truncate">{{ item.title }}</p>
+                    <p v-if="item.variantLabel" class="text-gray-400 text-xs mt-0.5">{{ item.variantLabel }}</p>
                     <p class="text-gray-500 text-sm">฿{{ item.price.toFixed(2) }}</p>
                     <div class="flex items-center gap-2 mt-1.5">
                         <button
-                            @click="decrement(item.id)"
+                            @click="decrement(item.key)"
                             class="w-7 h-7 bg-gray-100 rounded-full text-base leading-none"
                         >
                             −
@@ -71,8 +72,8 @@ export default {
         increment(item) {
             useCartStore().addItem(item)
         },
-        decrement(id) {
-            useCartStore().decrementItem(id)
+        decrement(key) {
+            useCartStore().decrementItem(key)
         },
     },
 }

@@ -20,8 +20,8 @@
 
             <div class="bg-gray-50 rounded-xl p-4 mb-6">
                 <p class="text-sm font-semibold text-gray-700 mb-3">Order Summary</p>
-                <div v-for="item in items" :key="item.id" class="flex justify-between text-sm py-1">
-                    <span class="text-gray-600">{{ item.title }} × {{ item.quantity }}</span>
+                <div v-for="item in items" :key="item.key" class="flex justify-between text-sm py-1">
+                    <span class="text-gray-600">{{ item.title }}{{ item.variantLabel ? ' (' + item.variantLabel + ')' : '' }} × {{ item.quantity }}</span>
                     <span class="font-medium">฿{{ (item.price * item.quantity).toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between font-bold mt-3 pt-3 border-t border-gray-200">

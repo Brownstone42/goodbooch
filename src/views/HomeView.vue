@@ -83,7 +83,7 @@
                     </router-link>
                     <div class="flex items-end justify-between mt-3">
                         <div>
-                            <span class="text-lg font-bold text-gray-900">{{ product.price.toFixed(2) }}</span>
+                            <span class="text-lg font-bold text-gray-900">{{ product.displayPrice.toFixed(2) }}</span>
                             <span class="text-sm text-gray-500 ml-1">บาท</span>
                         </div>
                         <button 
@@ -158,7 +158,21 @@ export default {
     },
     methods: {
         addToCart(product) {
-            useCartStore().addItem(product)
+            if (!product.variants?.length) return
+            if (product.variants.length > 1 || product.optionGroups?.length) {
+                this.$router.push('/product/' + product.id)
+                return
+            }
+            const variant = product.variants[0]
+            useCartStore().addItem({
+                key: `${product.id}_${variant.id}`,
+                productId: product.id,
+                variantId: variant.id,
+                variantLabel: null,
+                title: product.title,
+                price: variant.price,
+                imageUrl: product.imageUrl,
+            })
         }
     }
 }

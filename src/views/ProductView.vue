@@ -5,17 +5,38 @@
         </div>
         <div v-if="product">
             <img
-                :src="product.imageUrl || '/images/mask.png'"
+                :src="displayImage"
                 :alt="product.title"
                 class="w-full aspect-square object-cover"
             />
             <div class="p-4">
                 <h1 class="text-2xl font-bold">{{ product.title }}</h1>
-                <p class="text-xl text-gray-600 mt-1">${{ product.price.toFixed(2) }}</p>
+                <p class="text-xl text-gray-600 mt-1">฿{{ displayPrice.toFixed(2) }}</p>
                 <p class="text-gray-500 mt-3 leading-relaxed">{{ product.description }}</p>
+
+                <div v-for="group in product.optionGroups" :key="group.name" class="mt-4">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">{{ group.name }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="option in group.options"
+                            :key="option"
+                            @click="selectedOptions[group.name] = option"
+                            :class="[
+                                'px-4 py-2 rounded-xl border text-sm font-medium transition-all',
+                                selectedOptions[group.name] === option
+                                    ? 'bg-black text-white border-black'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                            ]"
+                        >
+                            {{ option }}
+                        </button>
+                    </div>
+                </div>
+
                 <button
                     @click="addToCart"
-                    class="mt-6 w-full bg-black text-white py-3.5 rounded-xl text-base font-medium"
+                    :disabled="!selectedVariant"
+                    class="mt-6 w-full bg-black text-white py-3.5 rounded-xl text-base font-medium disabled:opacity-50"
                 >
                     Add to Cart
                 </button>
@@ -30,19 +51,70 @@ import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
 
 export default {
-    mounted() {
-        if (useProductsStore().products.length === 0) {
-            useProductsStore().getProducts()
+    data() {
+        return {
+            selectedOptions: {},
         }
     },
     computed: {
         product() {
             return useProductsStore().getById(this.$route.params.id)
         },
+        selectedVariant() {
+            if (!this.product?.variants) return null
+            if (!this.product.optionGroups?.length) return this.product.variants[0] ?? null
+            return (
+                this.product.variants.find((v) =>
+                    v.optionValues.every(
+                        (val, i) => this.selectedOptions[this.product.optionGroups[i]?.name] === val
+                    )
+                ) ?? null
+            )
+        },
+        displayPrice() {
+            return this.selectedVariant?.price ?? this.product?.displayPrice ?? 0
+        },
+        displayImage() {
+            return this.selectedVariant?.imageUrl || this.product?.coverImageUrl || this.product?.imageUrl || '/images/mask.png'
+        },
+    },
+    watch: {
+        product(val) {
+            if (val) this.initOptions()
+        },
+    },
+    mounted() {
+        if (useProductsStore().products.length === 0) {
+            useProductsStore().getProducts()
+        } else {
+            this.initOptions()
+        }
     },
     methods: {
+        initOptions() {
+            if (!this.product?.optionGroups) return
+            const opts = {}
+            for (const group of this.product.optionGroups) {
+                opts[group.name] = group.options[0] ?? ''
+            }
+            this.selectedOptions = opts
+        },
         addToCart() {
-            useCartStore().addItem(this.product)
+            if (!this.selectedVariant) return
+            const product = this.product
+            const variant = this.selectedVariant
+            const label = product.optionGroups?.length
+                ? product.optionGroups.map((g) => this.selectedOptions[g.name]).join(' / ')
+                : null
+            useCartStore().addItem({
+                key: `${product.id}_${variant.id}`,
+                productId: product.id,
+                variantId: variant.id,
+                variantLabel: label,
+                title: product.title,
+                price: variant.price,
+                imageUrl: this.displayImage,
+            })
             this.$router.push('/cart')
         },
     },

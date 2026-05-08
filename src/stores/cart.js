@@ -9,23 +9,23 @@ export const useCartStore = defineStore('cart', {
         itemCount: (state) => state.items.reduce((sum, item) => sum + item.quantity, 0),
     },
     actions: {
-        addItem(product) {
-            const existing = this.items.find((item) => item.id === product.id)
+        addItem({ key, productId, variantId, variantLabel, title, price, imageUrl }) {
+            const existing = this.items.find((item) => item.key === key)
             if (existing) {
                 existing.quantity++
             } else {
-                this.items.push({ ...product, quantity: 1 })
+                this.items.push({ key, productId, variantId, variantLabel, title, price, imageUrl, quantity: 1 })
             }
         },
-        removeItem(productId) {
-            this.items = this.items.filter((item) => item.id !== productId)
+        removeItem(key) {
+            this.items = this.items.filter((item) => item.key !== key)
         },
-        decrementItem(productId) {
-            const item = this.items.find((item) => item.id === productId)
+        decrementItem(key) {
+            const item = this.items.find((item) => item.key === key)
             if (item && item.quantity > 1) {
                 item.quantity--
             } else {
-                this.removeItem(productId)
+                this.removeItem(key)
             }
         },
         clearCart() {
