@@ -12,6 +12,11 @@
                         <p class="text-sm text-slate-500 mt-1">Manage and update customer orders.</p>
                     </div>
 
+                    <div v-if="error" class="mx-8 mt-6 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-5 py-3 flex items-center justify-between">
+                        <span>{{ error }}</span>
+                        <button @click="reload" class="text-red-600 font-semibold underline text-sm ml-4">Retry</button>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
@@ -24,6 +29,13 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
+                                <tr v-if="loading">
+                                    <td colspan="5" class="px-8 py-16 text-center">
+                                        <div class="flex justify-center">
+                                            <div class="w-6 h-6 border-4 border-slate-300 border-t-[#005c3d] rounded-full animate-spin"></div>
+                                        </div>
+                                    </td>
+                                </tr>
                                 <tr v-for="order in orders" :key="order.id" class="hover:bg-slate-50/50 transition-colors">
                                     <td class="px-8 py-5">
                                         <p class="font-bold text-slate-900 text-sm">{{ order.customerName }}</p>
@@ -55,7 +67,7 @@
                                         <span class="text-sm text-slate-500">{{ formatDate(order.createdAt) }}</span>
                                     </td>
                                 </tr>
-                                <tr v-if="orders.length === 0">
+                                <tr v-if="!loading && orders.length === 0">
                                     <td colspan="5" class="px-8 py-16 text-center text-slate-400 text-sm">No orders yet.</td>
                                 </tr>
                             </tbody>
@@ -86,11 +98,20 @@ export default {
         orders() {
             return useOrdersStore().orders
         },
+        loading() {
+            return useOrdersStore().loading
+        },
+        error() {
+            return useOrdersStore().error
+        },
     },
     mounted() {
         useOrdersStore().getOrders()
     },
     methods: {
+        reload() {
+            useOrdersStore().getOrders()
+        },
         updateStatus(orderId, status) {
             useOrdersStore().updateOrderStatus(orderId, status)
         },

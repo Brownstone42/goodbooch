@@ -7,13 +7,23 @@ import { useProductsStore } from './products'
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
         orders: [],
+        loading: false,
+        error: null,
     }),
     actions: {
         async getOrders() {
-            const snapshot = await getDocs(collection(db, 'orders'))
-            this.orders = snapshot.docs
-                .map((d) => ({ id: d.id, ...d.data() }))
-                .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+            this.loading = true
+            this.error = null
+            try {
+                const snapshot = await getDocs(collection(db, 'orders'))
+                this.orders = snapshot.docs
+                    .map((d) => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+            } catch (e) {
+                this.error = 'Failed to load orders.'
+            } finally {
+                this.loading = false
+            }
         },
         async createOrder({ customerName, phone, address, note }) {
             const cartStore = useCartStore()

@@ -6,37 +6,47 @@ import { db, storage } from '../firebase'
 export const useProductsStore = defineStore('products', {
     state: () => ({
         products: [],
+        loading: false,
+        error: null,
     }),
     getters: {
         getById: (state) => (id) => state.products.find((p) => p.id === id),
     },
     actions: {
         async getProducts() {
-            const snapshot = await getDocs(collection(db, 'products'))
-            this.products = await Promise.all(
-                snapshot.docs.map(async (docSnap) => {
-                    const data = { id: docSnap.id, ...docSnap.data() }
-                    const coverPath = data.coverImagePath || data.imagePath
-                    if (coverPath) {
-                        data.coverImageUrl = await getDownloadURL(storageRef(storage, coverPath))
-                    }
-                    if (!data.variants || data.variants.length === 0) {
-                        data.variants = [{ id: 'default', optionValues: [], price: data.price ?? 0, stock: 0, imagePath: null }]
-                        data.optionGroups = data.optionGroups || []
-                    }
-                    data.variants = await Promise.all(
-                        data.variants.map(async (v) => {
-                            if (v.imagePath) {
-                                v.imageUrl = await getDownloadURL(storageRef(storage, v.imagePath))
-                            }
-                            return v
-                        })
-                    )
-                    data.displayPrice = data.variants[0].price
-                    data.imageUrl = data.coverImageUrl || data.variants.find((v) => v.imageUrl)?.imageUrl || null
-                    return data
-                })
-            )
+            this.loading = true
+            this.error = null
+            try {
+                const snapshot = await getDocs(collection(db, 'products'))
+                this.products = await Promise.all(
+                    snapshot.docs.map(async (docSnap) => {
+                        const data = { id: docSnap.id, ...docSnap.data() }
+                        const coverPath = data.coverImagePath || data.imagePath
+                        if (coverPath) {
+                            data.coverImageUrl = await getDownloadURL(storageRef(storage, coverPath))
+                        }
+                        if (!data.variants || data.variants.length === 0) {
+                            data.variants = [{ id: 'default', optionValues: [], price: data.price ?? 0, stock: 0, imagePath: null }]
+                            data.optionGroups = data.optionGroups || []
+                        }
+                        data.variants = await Promise.all(
+                            data.variants.map(async (v) => {
+                                if (v.imagePath) {
+                                    v.imageUrl = await getDownloadURL(storageRef(storage, v.imagePath))
+                                }
+                                return v
+                            })
+                        )
+                        data.displayPrice = data.variants[0].price
+                        data.imageUrl = data.coverImageUrl || data.variants.find((v) => v.imageUrl)?.imageUrl || null
+                        return data
+                    })
+                )
+            } catch (e) {
+                this.error = 'Failed to load products.'
+            } finally {
+                this.loading = false
+            }
         },
         async createProduct({ title, description, isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
             await addDoc(collection(db, 'products'), {

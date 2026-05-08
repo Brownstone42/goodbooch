@@ -16,6 +16,11 @@
             </button>
         </div>
 
+        <div v-if="error" class="mx-8 mt-6 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-5 py-3 flex items-center justify-between">
+            <span>{{ error }}</span>
+            <button @click="reload" class="text-red-600 font-semibold underline text-sm ml-4">Retry</button>
+        </div>
+
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -28,6 +33,16 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
+                    <tr v-if="productsLoading">
+                        <td colspan="5" class="px-8 py-16 text-center">
+                            <div class="flex justify-center">
+                                <div class="w-6 h-6 border-4 border-slate-300 border-t-[#005c3d] rounded-full animate-spin"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr v-else-if="!productsLoading && products.length === 0">
+                        <td colspan="5" class="px-8 py-16 text-center text-slate-400 text-sm">No products yet.</td>
+                    </tr>
                     <tr v-for="product in products" :key="product.id" class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
@@ -290,11 +305,20 @@ export default {
         products() {
             return useProductsStore().products
         },
+        productsLoading() {
+            return useProductsStore().loading
+        },
+        error() {
+            return useProductsStore().error
+        },
     },
     mounted() {
         useProductsStore().getProducts()
     },
     methods: {
+        reload() {
+            useProductsStore().getProducts()
+        },
         handleCoverImage(e) {
             const file = e.target.files[0]
             if (file) {

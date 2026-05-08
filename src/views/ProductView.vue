@@ -3,7 +3,10 @@
         <div class="p-4">
             <button @click="$router.back()" class="text-gray-500 text-sm">← Back</button>
         </div>
-        <div v-if="product">
+        <div v-if="loading" class="flex justify-center items-center py-32">
+            <div class="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin"></div>
+        </div>
+        <div v-else-if="product">
             <img
                 :src="displayImage"
                 :alt="product.title"
@@ -47,6 +50,7 @@
             </div>
         </div>
         <div v-else class="p-8 text-center text-gray-400">Product not found.</div>
+
     </div>
 </template>
 
@@ -63,6 +67,9 @@ export default {
     computed: {
         product() {
             return useProductsStore().getById(this.$route.params.id)
+        },
+        loading() {
+            return useProductsStore().loading
         },
         selectedVariant() {
             if (!this.product?.variants) return null

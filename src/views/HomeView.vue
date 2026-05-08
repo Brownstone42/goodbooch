@@ -56,7 +56,14 @@
         </div>
 
         <!-- Product Grid -->
-        <div class="grid grid-cols-2 gap-x-3 gap-y-6 px-4 mt-8">
+        <div v-if="loading" class="flex justify-center items-center py-20">
+            <div class="w-8 h-8 border-4 border-[#005c3d] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <div v-else-if="error" class="mx-4 mt-8 bg-red-50 border border-red-200 text-red-600 text-sm rounded-2xl px-5 py-4 flex items-center justify-between">
+            <span>{{ error }}</span>
+            <button @click="retry" class="text-red-600 font-semibold underline text-sm ml-4">Retry</button>
+        </div>
+        <div v-else class="grid grid-cols-2 gap-x-3 gap-y-6 px-4 mt-8">
             <div 
                 v-for="product in products" 
                 :key="product.id"
@@ -152,11 +159,20 @@ export default {
         products() {
             return useProductsStore().products.filter((p) => p.isActive)
         },
+        loading() {
+            return useProductsStore().loading
+        },
+        error() {
+            return useProductsStore().error
+        },
         cartItemCount() {
             return useCartStore().itemCount
         }
     },
     methods: {
+        retry() {
+            useProductsStore().getProducts()
+        },
         addToCart(product) {
             if (!product.variants?.length) return
             if (product.variants.length > 1 || product.optionGroups?.length) {
