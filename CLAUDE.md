@@ -18,6 +18,10 @@
 - Desktop-first for admin pages
 - Prefer simple implementations
 - Avoid overengineering
+- Never rewrite working UI unless requested
+- Prefer editing existing components over generating new systems
+- Keep file sizes small and modular
+- Reuse existing Tailwind utility patterns whenever possible
 
 # Firebase Rules
 
