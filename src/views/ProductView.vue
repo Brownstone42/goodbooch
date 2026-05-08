@@ -121,6 +121,7 @@ export default {
                 title: product.title,
                 price: variant.price,
                 imageUrl: this.displayImage,
+                stock: variant.stock ?? 0,
             })
             this.$router.push('/cart')
         },

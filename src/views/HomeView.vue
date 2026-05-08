@@ -172,6 +172,7 @@ export default {
                 title: product.title,
                 price: variant.price,
                 imageUrl: product.imageUrl,
+                stock: variant.stock ?? 0,
             })
         }
     }

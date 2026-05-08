@@ -30,6 +30,8 @@
                 </div>
             </div>
 
+            <div v-if="stockError" class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-4 whitespace-pre-line">{{ stockError }}</div>
+
             <form @submit.prevent="submitOrder" class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Name</label>
@@ -95,6 +97,7 @@ export default {
         return {
             ordered: false,
             loading: false,
+            stockError: null,
             form: {
                 customerName: '',
                 phone: '',
@@ -114,9 +117,14 @@ export default {
     methods: {
         async submitOrder() {
             this.loading = true
-            await useOrdersStore().createOrder(this.form)
+            this.stockError = null
+            try {
+                await useOrdersStore().createOrder(this.form)
+                this.ordered = true
+            } catch (e) {
+                this.stockError = e.message
+            }
             this.loading = false
-            this.ordered = true
         },
     },
 }

@@ -35,7 +35,8 @@
                         <span class="text-sm w-4 text-center">{{ item.quantity }}</span>
                         <button
                             @click="increment(item)"
-                            class="w-7 h-7 bg-gray-100 rounded-full text-base leading-none"
+                            :disabled="item.stock !== undefined && item.quantity >= item.stock"
+                            class="w-7 h-7 bg-gray-100 rounded-full text-base leading-none disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             +
                         </button>

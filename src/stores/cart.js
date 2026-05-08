@@ -9,12 +9,14 @@ export const useCartStore = defineStore('cart', {
         itemCount: (state) => state.items.reduce((sum, item) => sum + item.quantity, 0),
     },
     actions: {
-        addItem({ key, productId, variantId, variantLabel, title, price, imageUrl }) {
+        addItem({ key, productId, variantId, variantLabel, title, price, imageUrl, stock }) {
             const existing = this.items.find((item) => item.key === key)
             if (existing) {
+                if (stock !== undefined && existing.quantity >= stock) return
                 existing.quantity++
             } else {
-                this.items.push({ key, productId, variantId, variantLabel, title, price, imageUrl, quantity: 1 })
+                if (stock === 0) return
+                this.items.push({ key, productId, variantId, variantLabel, title, price, imageUrl, stock, quantity: 1 })
             }
         },
         removeItem(key) {

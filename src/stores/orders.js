@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { collection, addDoc, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useCartStore } from './cart'
+import { useProductsStore } from './products'
 
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
@@ -16,6 +17,20 @@ export const useOrdersStore = defineStore('orders', {
         },
         async createOrder({ customerName, phone, address, note }) {
             const cartStore = useCartStore()
+            const productsStore = useProductsStore()
+            await productsStore.getProducts()
+            const stockErrors = []
+            for (const item of cartStore.items) {
+                const product = productsStore.products.find((p) => p.id === item.productId)
+                const variant = product?.variants?.find((v) => v.id === item.variantId)
+                const available = variant?.stock ?? 0
+                if (item.quantity > available) {
+                    stockErrors.push(`"${item.title}${item.variantLabel ? ' (' + item.variantLabel + ')' : ''}" — only ${available} left in stock`)
+                }
+            }
+            if (stockErrors.length > 0) {
+                throw new Error(stockErrors.join('\n'))
+            }
             await addDoc(collection(db, 'orders'), {
                 customerName,
                 phone,
