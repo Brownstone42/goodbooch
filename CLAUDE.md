@@ -1,29 +1,66 @@
-# Project Architecture
+# CLAUDE-SPECIFIC INSTRUCTIONS
+
+These instructions are intended for Claude Code only.
+Other AI agents should ignore this file unless explicitly requested.
+
+# Tech Stack
 
 - Vue3
-- Pinia state management
-- Firebase backend
+- Pinia
+- Firebase
+- Firestore
+- Firebase Storage
 - TailwindCSS
-- Never load Firebase directly inside components
-- Use stores for all data access
-- Use Javascript only not Typescript
-- Use Vue Method API not Composition API
-- Always wait for my approval before generating code
-- Not using script setup, layout should be template > script > style
-- Using TailwindCSS as a css framework
+- Javascript only (No Typescript)
+
+---
+
+# Vue Rules
+
+- Use Vue Method API
+- Do not use Composition API
+- Do not use `<script setup>`
+- Component order must always be:
+    - template
+    - script
+    - style
+
+---
+
+# Architecture Rules
+
+- Never load Firebase directly inside Vue components
 - All Firebase access must go through Pinia stores
-- Use Firebase Storage for images
 - Use Firestore for metadata
+- Use Firebase Storage for images
+- Keep implementation simple
+- Avoid overengineering
+- Keep file sizes small and modular
+- Prefer editing existing components over generating new systems
+- Never rewrite working UI unless requested
+
+---
+
+# UI / UX Rules
+
+- Use TailwindCSS only
+- Reuse existing Tailwind utility patterns whenever possible
 - Mobile-first for customer pages
 - Desktop-first for admin pages
-- Prefer simple implementations
-- Avoid overengineering
-- Never rewrite working UI unless requested
-- Prefer editing existing components over generating new systems
-- Keep file sizes small and modular
-- Reuse existing Tailwind utility patterns whenever possible
+- Preserve existing UI design language unless explicitly requested
+
+---
 
 # Firebase Rules
 
 - Never modify Firebase rules without asking
 - Never modify Firebase config without asking
+
+---
+
+# AI Workflow Rules
+
+- Always wait for my approval before generating code
+- Do not refactor unrelated systems
+- Do not rewrite entire pages unless explicitly requested
+- Focus only on the requested task scope

@@ -12,6 +12,10 @@
             <div class="p-4">
                 <h1 class="text-2xl font-bold">{{ product.title }}</h1>
                 <p class="text-xl text-gray-600 mt-1">฿{{ displayPrice.toFixed(2) }}</p>
+                <div v-if="selectedVariant" class="mt-1 text-sm font-medium">
+                    <span v-if="displayStock > 0" class="text-gray-500">Stock: {{ displayStock }}</span>
+                    <span v-else class="text-red-500">Out of Stock</span>
+                </div>
                 <p class="text-gray-500 mt-3 leading-relaxed">{{ product.description }}</p>
 
                 <div v-for="group in product.optionGroups" :key="group.name" class="mt-4">
@@ -35,7 +39,7 @@
 
                 <button
                     @click="addToCart"
-                    :disabled="!selectedVariant"
+                    :disabled="!selectedVariant || displayStock === 0"
                     class="mt-6 w-full bg-black text-white py-3.5 rounded-xl text-base font-medium disabled:opacity-50"
                 >
                     Add to Cart
@@ -76,6 +80,9 @@ export default {
         },
         displayImage() {
             return this.selectedVariant?.imageUrl || this.product?.coverImageUrl || this.product?.imageUrl || '/images/mask.png'
+        },
+        displayStock() {
+            return this.selectedVariant?.stock ?? 0
         },
     },
     watch: {
