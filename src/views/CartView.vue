@@ -2,18 +2,7 @@
     <div class="p-4">
         <h1 class="text-2xl font-bold mb-4">Cart</h1>
 
-        <div v-if="ordered" class="flex flex-col items-center justify-center mt-20 text-center">
-            <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-            </div>
-            <p class="text-xl font-bold">Order placed!</p>
-            <p class="text-gray-500 text-sm mt-1">Thank you for your order.</p>
-            <router-link to="/" class="mt-6 text-black underline text-sm">Continue Shopping</router-link>
-        </div>
-
-        <div v-else-if="items.length === 0" class="flex flex-col items-center justify-center mt-20 text-gray-400">
+        <div v-if="items.length === 0" class="flex flex-col items-center justify-center mt-20 text-gray-400">
             <p class="text-lg">Your cart is empty</p>
             <router-link to="/" class="mt-4 text-black underline text-sm">Continue Shopping</router-link>
         </div>
@@ -57,7 +46,7 @@
             </div>
 
             <button
-                @click="checkout"
+                @click="$router.push('/checkout')"
                 class="mt-4 w-full bg-black text-white py-3.5 rounded-xl text-base font-medium"
             >
                 Checkout
@@ -70,11 +59,6 @@
 import { useCartStore } from '../stores/cart'
 
 export default {
-    data() {
-        return {
-            ordered: false,
-        }
-    },
     computed: {
         items() {
             return useCartStore().items
@@ -89,10 +73,6 @@ export default {
         },
         decrement(id) {
             useCartStore().decrementItem(id)
-        },
-        checkout() {
-            useCartStore().clearCart()
-            this.ordered = true
         },
     },
 }
