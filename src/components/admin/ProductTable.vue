@@ -25,15 +25,15 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    <tr v-for="product in products" :key="product.id" class="hover:bg-slate-50/50 transition-colors group">
+                    <tr v-for="(product, index) in products" :key="product.id" class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
-                                    <img v-if="product.id % 2 === 0" src="/images/mask.png" alt="" class="w-full h-full object-cover" />
+                                    <img v-if="index % 2 === 0" src="/images/mask.png" alt="" class="w-full h-full object-cover" />
                                     <img v-else src="/images/gloves.png" alt="" class="w-full h-full object-cover" />
                                 </div>
                                 <div>
-                                    <p class="font-bold text-slate-900 group-hover:text-[#005c3d] transition-colors">{{ product.name }}</p>
+                                    <p class="font-bold text-slate-900 group-hover:text-[#005c3d] transition-colors">{{ product.title }}</p>
                                     <p class="text-xs text-slate-500 mt-0.5 line-clamp-1 max-w-[200px]">{{ product.description }}</p>
                                 </div>
                             </div>
@@ -41,9 +41,9 @@
                         <td class="px-8 py-5">
                             <span :class="[
                                 'px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider',
-                                product.id % 3 === 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                product.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                             ]">
-                                {{ product.id % 3 === 0 ? 'Out of Stock' : 'Active' }}
+                                {{ product.isActive ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
                         <td class="px-8 py-5">
@@ -54,10 +54,10 @@
                                 <div class="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden">
                                     <div :class="[
                                         'h-full rounded-full',
-                                        product.id % 3 === 0 ? 'w-0' : 'w-2/3 bg-[#005c3d]'
+                                        product.isActive ? 'w-2/3 bg-[#005c3d]' : 'w-0'
                                     ]"></div>
                                 </div>
-                                <span class="text-xs font-bold text-slate-600">{{ product.id % 3 === 0 ? 0 : 42 }}</span>
+                                <span class="text-xs font-bold text-slate-600">{{ product.isActive ? 42 : 0 }}</span>
                             </div>
                         </td>
                         <td class="px-8 py-5 text-right sm:text-left">
@@ -105,8 +105,11 @@ export default {
     name: 'ProductTable',
     computed: {
         products() {
-            return useProductsStore().list
-        }
-    }
+            return useProductsStore().products
+        },
+    },
+    mounted() {
+        useProductsStore().getProducts()
+    },
 }
 </script>

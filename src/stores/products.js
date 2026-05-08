@@ -1,15 +1,28 @@
 import { defineStore } from 'pinia'
+import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore'
+import { db } from '../firebase'
 
 export const useProductsStore = defineStore('products', {
     state: () => ({
-        list: [
-            { id: 1, name: 'Classic T-Shirt', price: 29.99, description: 'A comfortable everyday t-shirt.' },
-            { id: 2, name: 'Slim Jeans', price: 59.99, description: 'Modern slim-fit jeans.' },
-            { id: 3, name: 'Sneakers', price: 89.99, description: 'Lightweight everyday sneakers.' },
-            { id: 4, name: 'Hoodie', price: 49.99, description: 'Cozy pullover hoodie.' },
-        ],
+        products: [],
     }),
     getters: {
-        getById: (state) => (id) => state.list.find((p) => p.id === Number(id)),
+        getById: (state) => (id) => state.products.find((p) => p.id === id),
+    },
+    actions: {
+        async getProducts() {
+            const snapshot = await getDocs(collection(db, 'products'))
+            this.products = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        },
+        async createProduct({ title, description, price, isActive }) {
+            await addDoc(collection(db, 'products'), {
+                title,
+                description,
+                price,
+                isActive,
+                createdAt: serverTimestamp(),
+            })
+            await this.getProducts()
+        },
     },
 })
