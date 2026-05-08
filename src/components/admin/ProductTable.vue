@@ -64,12 +64,12 @@
                         </td>
                         <td class="px-8 py-5 text-right sm:text-left">
                             <div class="flex items-center gap-2">
-                                <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                <button @click="openEdit(product)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                 </button>
-                                <button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                                <button @click="confirmDelete(product)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
@@ -103,7 +103,7 @@
             <div class="absolute inset-0 bg-black/40" @click="closeForm"></div>
             <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-slate-900">Add Product</h3>
+                    <h3 class="text-xl font-bold text-slate-900">{{ editingProduct ? 'Edit Product' : 'Add Product' }}</h3>
                     <button @click="closeForm" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -186,7 +186,7 @@
                             :disabled="loading"
                             class="flex-1 px-6 py-3 rounded-xl bg-[#005c3d] text-white font-bold text-sm hover:bg-[#004d33] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                         >
-                            {{ loading ? 'Saving...' : 'Save Product' }}
+                            {{ loading ? 'Saving...' : editingProduct ? 'Update Product' : 'Save Product' }}
                         </button>
                     </div>
                 </form>
@@ -204,6 +204,7 @@ export default {
         return {
             showForm: false,
             loading: false,
+            editingProduct: null,
             imageFile: null,
             form: {
                 title: '',
@@ -222,18 +223,37 @@ export default {
         useProductsStore().getProducts()
     },
     methods: {
+        openEdit(product) {
+            this.editingProduct = product
+            this.form = {
+                title: product.title,
+                description: product.description,
+                price: product.price,
+                isActive: product.isActive,
+            }
+            this.showForm = true
+        },
+        async confirmDelete(product) {
+            if (!confirm(`Delete "${product.title}"?`)) return
+            await useProductsStore().deleteProduct(product.id)
+        },
         async submitForm() {
             this.loading = true
-            let imagePath = null
+            let imagePath = this.editingProduct ? this.editingProduct.imagePath : null
             if (this.imageFile) {
                 imagePath = await useProductsStore().uploadProductImage(this.imageFile)
             }
-            await useProductsStore().createProduct({ ...this.form, imagePath })
+            if (this.editingProduct) {
+                await useProductsStore().updateProduct(this.editingProduct.id, { ...this.form, imagePath })
+            } else {
+                await useProductsStore().createProduct({ ...this.form, imagePath })
+            }
             this.loading = false
             this.closeForm()
         },
         closeForm() {
             this.showForm = false
+            this.editingProduct = null
             this.imageFile = null
             this.form = { title: '', description: '', price: null, isActive: true }
         },

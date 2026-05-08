@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../firebase'
 
@@ -33,6 +33,14 @@ export const useProductsStore = defineStore('products', {
                 createdAt: serverTimestamp(),
             })
             await this.getProducts()
+        },
+        async updateProduct(id, { title, description, price, isActive, imagePath }) {
+            await updateDoc(doc(db, 'products', id), { title, description, price, isActive, imagePath })
+            await this.getProducts()
+        },
+        async deleteProduct(id) {
+            await deleteDoc(doc(db, 'products', id))
+            this.products = this.products.filter((p) => p.id !== id)
         },
         async uploadProductImage(file) {
             const path = `products/${Date.now()}-${file.name}`
