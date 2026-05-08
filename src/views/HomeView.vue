@@ -64,7 +64,7 @@
             >
                 <div class="relative aspect-[4/3]">
                     <router-link :to="'/product/' + product.id">
-                        <img :src="product.id % 2 === 0 ? '/images/mask.png' : '/images/gloves.png'" :alt="product.title" class="w-full h-full object-cover" />
+                        <img :src="product.imageUrl || '/images/mask.png'" :alt="product.title" class="w-full h-full object-cover" />
                     </router-link>
                     <button class="absolute top-3 right-3 text-white drop-shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

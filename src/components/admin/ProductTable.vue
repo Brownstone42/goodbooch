@@ -28,12 +28,11 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    <tr v-for="(product, index) in products" :key="product.id" class="hover:bg-slate-50/50 transition-colors group">
+                    <tr v-for="product in products" :key="product.id" class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
-                                    <img v-if="index % 2 === 0" src="/images/mask.png" alt="" class="w-full h-full object-cover" />
-                                    <img v-else src="/images/gloves.png" alt="" class="w-full h-full object-cover" />
+                                    <img :src="product.imageUrl || '/images/mask.png'" :alt="product.title" class="w-full h-full object-cover" />
                                 </div>
                                 <div>
                                     <p class="font-bold text-slate-900 group-hover:text-[#005c3d] transition-colors">{{ product.title }}</p>
@@ -147,6 +146,16 @@
                         />
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Image</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            @change="imageFile = $event.target.files[0]"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#005c3d] file:text-white"
+                        />
+                    </div>
+
                     <div class="flex items-center gap-3">
                         <button
                             type="button"
@@ -195,6 +204,7 @@ export default {
         return {
             showForm: false,
             loading: false,
+            imageFile: null,
             form: {
                 title: '',
                 description: '',
@@ -214,12 +224,17 @@ export default {
     methods: {
         async submitForm() {
             this.loading = true
-            await useProductsStore().createProduct(this.form)
+            let imagePath = null
+            if (this.imageFile) {
+                imagePath = await useProductsStore().uploadProductImage(this.imageFile)
+            }
+            await useProductsStore().createProduct({ ...this.form, imagePath })
             this.loading = false
             this.closeForm()
         },
         closeForm() {
             this.showForm = false
+            this.imageFile = null
             this.form = { title: '', description: '', price: null, isActive: true }
         },
     },

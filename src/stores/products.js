@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore'
-import { db } from '../firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db, storage } from '../firebase'
 
 export const useProductsStore = defineStore('products', {
     state: () => ({
@@ -12,17 +13,31 @@ export const useProductsStore = defineStore('products', {
     actions: {
         async getProducts() {
             const snapshot = await getDocs(collection(db, 'products'))
-            this.products = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+            this.products = await Promise.all(
+                snapshot.docs.map(async (doc) => {
+                    const data = { id: doc.id, ...doc.data() }
+                    if (data.imagePath) {
+                        data.imageUrl = await getDownloadURL(storageRef(storage, data.imagePath))
+                    }
+                    return data
+                })
+            )
         },
-        async createProduct({ title, description, price, isActive }) {
+        async createProduct({ title, description, price, isActive, imagePath = null }) {
             await addDoc(collection(db, 'products'), {
                 title,
                 description,
                 price,
                 isActive,
+                imagePath,
                 createdAt: serverTimestamp(),
             })
             await this.getProducts()
+        },
+        async uploadProductImage(file) {
+            const path = `products/${Date.now()}-${file.name}`
+            await uploadBytes(storageRef(storage, path), file)
+            return path
         },
     },
 })
