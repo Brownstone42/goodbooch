@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen bg-gray-50 pb-16">
+    <div :class="['min-h-screen bg-gray-50', !isAdmin ? 'pb-16' : '']">
         <router-view />
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex">
+        <nav v-if="!isAdmin" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex sm:hidden">
             <router-link
                 to="/"
                 class="flex-1 flex items-center justify-center py-3 text-sm text-gray-500"
@@ -27,6 +27,9 @@ export default {
     computed: {
         itemCount() {
             return useCartStore().itemCount
+        },
+        isAdmin() {
+            return this.$route.path.startsWith('/admin')
         },
     },
 }
