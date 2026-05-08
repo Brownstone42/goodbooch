@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Storage\\\\VueJS\\\\goodbooch\" -Force | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"Dir\"}else{\"File\"}}} | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Storage\\\\VueJS\\\\goodbooch\\\\src\" -Recurse | Where-Object {$_.PSIsContainer} | Select-Object -ExpandProperty FullName | ForEach-Object {$_.Substring\\(27\\)} | Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Storage\\\\VueJS\\\\goodbooch\\\\src\" -Force | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"Dir\"}else{\"File\"}}} | Format-Table -AutoSize)"
+    ]
+  }
+}
