@@ -1,7 +1,7 @@
 <template>
     <div class="p-4 max-w-lg mx-auto">
         <div class="mb-4">
-            <router-link to="/cart" class="text-gray-500 text-sm">← Back to Cart</router-link>
+            <button @click="$router.back()" class="text-gray-500 text-sm">← Back</button>
         </div>
 
         <div v-if="ordered" class="flex flex-col items-center justify-center mt-20 text-center">

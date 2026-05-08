@@ -1,6 +1,9 @@
 <template>
     <div class="p-4">
-        <h1 class="text-2xl font-bold mb-4">Cart</h1>
+        <div class="flex items-center justify-between mb-4">
+            <button @click="$router.back()" class="text-gray-500 text-sm">← Back</button>
+            <h1 class="text-2xl font-bold">Cart</h1>
+        </div>
 
         <div v-if="items.length === 0" class="flex flex-col items-center justify-center mt-20 text-gray-400">
             <p class="text-lg">Your cart is empty</p>

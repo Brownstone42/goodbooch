@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="p-4">
-            <router-link to="/" class="text-gray-500 text-sm">← Back</router-link>
+            <button @click="$router.back()" class="text-gray-500 text-sm">← Back</button>
         </div>
         <div v-if="product">
             <img
