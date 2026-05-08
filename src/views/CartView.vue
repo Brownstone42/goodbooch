@@ -2,7 +2,18 @@
     <div class="p-4">
         <h1 class="text-2xl font-bold mb-4">Cart</h1>
 
-        <div v-if="items.length === 0" class="flex flex-col items-center justify-center mt-20 text-gray-400">
+        <div v-if="ordered" class="flex flex-col items-center justify-center mt-20 text-center">
+            <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <p class="text-xl font-bold">Order placed!</p>
+            <p class="text-gray-500 text-sm mt-1">Thank you for your order.</p>
+            <router-link to="/" class="mt-6 text-black underline text-sm">Continue Shopping</router-link>
+        </div>
+
+        <div v-else-if="items.length === 0" class="flex flex-col items-center justify-center mt-20 text-gray-400">
             <p class="text-lg">Your cart is empty</p>
             <router-link to="/" class="mt-4 text-black underline text-sm">Continue Shopping</router-link>
         </div>
@@ -13,10 +24,14 @@
                 :key="item.id"
                 class="flex items-center gap-3 py-4 border-b border-gray-100"
             >
-                <div class="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0"></div>
+                <img
+                    :src="item.imageUrl || '/images/mask.png'"
+                    :alt="item.title"
+                    class="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                />
                 <div class="flex-1 min-w-0">
-                    <p class="font-medium text-sm truncate">{{ item.name }}</p>
-                    <p class="text-gray-500 text-sm">${{ item.price.toFixed(2) }}</p>
+                    <p class="font-medium text-sm truncate">{{ item.title }}</p>
+                    <p class="text-gray-500 text-sm">฿{{ item.price.toFixed(2) }}</p>
                     <div class="flex items-center gap-2 mt-1.5">
                         <button
                             @click="decrement(item.id)"
@@ -33,15 +48,18 @@
                         </button>
                     </div>
                 </div>
-                <p class="font-semibold text-sm">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                <p class="font-semibold text-sm">฿{{ (item.price * item.quantity).toFixed(2) }}</p>
             </div>
 
             <div class="mt-6 flex justify-between items-center">
                 <span class="text-lg font-bold">Total</span>
-                <span class="text-lg font-bold">${{ total.toFixed(2) }}</span>
+                <span class="text-lg font-bold">฿{{ total.toFixed(2) }}</span>
             </div>
 
-            <button class="mt-4 w-full bg-black text-white py-3.5 rounded-xl text-base font-medium">
+            <button
+                @click="checkout"
+                class="mt-4 w-full bg-black text-white py-3.5 rounded-xl text-base font-medium"
+            >
                 Checkout
             </button>
         </div>
@@ -52,6 +70,11 @@
 import { useCartStore } from '../stores/cart'
 
 export default {
+    data() {
+        return {
+            ordered: false,
+        }
+    },
     computed: {
         items() {
             return useCartStore().items
@@ -66,6 +89,10 @@ export default {
         },
         decrement(id) {
             useCartStore().decrementItem(id)
+        },
+        checkout() {
+            useCartStore().clearCart()
+            this.ordered = true
         },
     },
 }

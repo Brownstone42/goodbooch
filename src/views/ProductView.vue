@@ -4,13 +4,13 @@
             <router-link to="/" class="text-gray-500 text-sm">← Back</router-link>
         </div>
         <div v-if="product">
-            <div
-                class="w-full aspect-square bg-gray-100 flex items-center justify-center text-gray-300 text-sm"
-            >
-                No image
-            </div>
+            <img
+                :src="product.imageUrl || '/images/mask.png'"
+                :alt="product.title"
+                class="w-full aspect-square object-cover"
+            />
             <div class="p-4">
-                <h1 class="text-2xl font-bold">{{ product.name }}</h1>
+                <h1 class="text-2xl font-bold">{{ product.title }}</h1>
                 <p class="text-xl text-gray-600 mt-1">${{ product.price.toFixed(2) }}</p>
                 <p class="text-gray-500 mt-3 leading-relaxed">{{ product.description }}</p>
                 <button
@@ -30,6 +30,11 @@ import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
 
 export default {
+    mounted() {
+        if (useProductsStore().products.length === 0) {
+            useProductsStore().getProducts()
+        }
+    },
     computed: {
         product() {
             return useProductsStore().getById(this.$route.params.id)

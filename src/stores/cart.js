@@ -28,5 +28,8 @@ export const useCartStore = defineStore('cart', {
                 this.removeItem(productId)
             }
         },
+        clearCart() {
+            this.items = []
+        },
     },
 })
