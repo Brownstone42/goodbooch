@@ -2,11 +2,14 @@
     <div class="bg-[#f8f9fa] min-h-screen pb-10">
         <!-- Top Header -->
         <header class="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-            <button class="text-gray-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            <router-link to="/login" class="flex items-center justify-center w-9 h-9">
+                <div v-if="isAuthenticated" class="w-9 h-9 rounded-full bg-[#005c3d] text-white flex items-center justify-center text-sm font-bold">
+                    {{ userInitial }}
+                </div>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-            </button>
+            </router-link>
             <img src="/images/logo.png" alt="Goodbooch Supply" class="h-10 aspect-[3/1] object-contain" />
             <router-link to="/cart" class="relative">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,6 +141,7 @@
 <script>
 import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
+import { useAuthStore } from '../stores/auth'
 import { CATEGORIES } from '../constants/categories'
 
 export default {
@@ -151,6 +155,8 @@ export default {
         useProductsStore().getProducts()
     },
     computed: {
+        isAuthenticated() { return useAuthStore().isAuthenticated },
+        userInitial() { return (useAuthStore().user?.name || '?')[0].toUpperCase() },
         allActiveProducts() {
             return useProductsStore().products.filter((p) => p.isActive)
         },

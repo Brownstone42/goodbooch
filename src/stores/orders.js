@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, serverTimestamp } from 'fi
 import { db } from '../firebase'
 import { useCartStore } from './cart'
 import { useProductsStore } from './products'
+import { useAuthStore } from './auth'
 
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
@@ -41,7 +42,10 @@ export const useOrdersStore = defineStore('orders', {
             if (stockErrors.length > 0) {
                 throw new Error(stockErrors.join('\n'))
             }
+            const authUser = useAuthStore().user
             await addDoc(collection(db, 'orders'), {
+                userId: authUser?.id ?? null,
+                userProvider: authUser?.provider ?? null,
                 customerName,
                 phone,
                 address,

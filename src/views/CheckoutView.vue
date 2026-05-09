@@ -114,6 +114,7 @@
 <script>
 import { useCartStore } from '../stores/cart'
 import { useOrdersStore } from '../stores/orders'
+import { useAuthStore } from '../stores/auth'
 
 export default {
     data() {
@@ -130,6 +131,15 @@ export default {
                 note: '',
             },
         }
+    },
+    mounted() {
+        const auth = useAuthStore()
+        if (!auth.isAuthenticated) {
+            this.$router.replace('/login?redirect=/checkout')
+            return
+        }
+        this.form.customerName = auth.user.name
+        this.form.phone = auth.user.phone || ''
     },
     computed: {
         items() {

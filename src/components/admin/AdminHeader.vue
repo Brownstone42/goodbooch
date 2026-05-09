@@ -27,6 +27,6 @@
 
 <script>
 export default {
-    name: 'AdminHeader'
+    name: 'AdminHeader',
 }
 </script>
