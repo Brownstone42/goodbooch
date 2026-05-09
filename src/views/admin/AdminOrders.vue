@@ -12,16 +12,31 @@
                             <h2 class="text-xl font-bold text-slate-900">Orders</h2>
                             <p class="text-sm text-slate-500 mt-1">Manage and update customer orders.</p>
                         </div>
-                        <div class="relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                            <input
-                                v-model="search"
-                                type="text"
-                                placeholder="Search orders..."
-                                class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all w-56"
-                            />
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                                <button
+                                    v-for="opt in statusOptions"
+                                    :key="opt.value"
+                                    @click="filterStatus = opt.value"
+                                    :class="[
+                                        'px-4 py-1.5 rounded-lg text-sm font-semibold transition-all',
+                                        filterStatus === opt.value
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    ]"
+                                >{{ opt.label }}</button>
+                            </div>
+                            <div class="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <input
+                                    v-model="search"
+                                    type="text"
+                                    placeholder="Search orders..."
+                                    class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all w-56"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -93,7 +108,9 @@
                                     </td>
                                 </tr>
                                 <tr v-if="!loading && orders.length === 0">
-                                    <td colspan="5" class="px-8 py-16 text-center text-slate-400 text-sm">No orders yet.</td>
+                                    <td colspan="5" class="px-8 py-16 text-center text-slate-400 text-sm">
+                                        {{ search || filterStatus ? 'No orders match your filters.' : 'No orders yet.' }}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -122,11 +139,22 @@ export default {
     data() {
         return {
             search: '',
+            filterStatus: '',
         }
     },
     computed: {
+        statusOptions() {
+            return [
+                { value: '', label: 'All' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'shipped', label: 'Shipped' },
+            ]
+        },
         orders() {
-            const all = useOrdersStore().orders
+            let all = useOrdersStore().orders
+            if (this.filterStatus) {
+                all = all.filter((o) => o.status === this.filterStatus)
+            }
             if (!this.search.trim()) return all
             const q = this.search.toLowerCase()
             return all.filter((o) =>

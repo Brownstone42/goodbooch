@@ -172,7 +172,8 @@
                             
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1.5">Product Name</label>
-                                <input v-model="form.title" type="text" required placeholder="Enter product name..." class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent transition-all" />
+                                <input v-model="form.title" type="text" required placeholder="Enter product name..." class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent transition-all" :class="{ 'border-red-400': errors.title }" />
+                                <p v-if="errors.title" class="text-red-500 text-xs mt-1">{{ errors.title }}</p>
                             </div>
 
                             <div>
@@ -239,7 +240,8 @@
                                     <div class="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4">
                                         <div>
                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Variation Name</label>
-                                            <input v-model="group.name" type="text" placeholder="e.g. Color, Size" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent" />
+                                            <input v-model="group.name" type="text" placeholder="e.g. Color, Size" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent" :class="{ 'border-red-400': errors.optionGroups[gi]?.name }" />
+                                            <p v-if="errors.optionGroups[gi]?.name" class="text-red-500 text-xs mt-1">{{ errors.optionGroups[gi].name }}</p>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Options</label>
@@ -252,6 +254,7 @@
                                                 </div>
                                             </div>
                                             <input v-model="group.newOption" @keydown.enter.prevent="addOption(gi)" type="text" placeholder="Type option & press Enter" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent" />
+                                            <p v-if="errors.optionGroups[gi]?.options" class="text-red-500 text-xs mt-1">{{ errors.optionGroups[gi].options }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -263,6 +266,7 @@
                             </div>
 
                             <!-- Variants Table -->
+                            <p v-if="errors.variants" class="text-red-500 text-xs">{{ errors.variants }}</p>
                             <div class="mt-6 border border-slate-200 rounded-xl overflow-hidden bg-white">
                                 <div v-if="form.variants.length > 0 && form.optionGroups.length > 0" class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
                                     <span class="text-sm font-bold text-slate-700">Batch Edit All Variants</span>
@@ -297,10 +301,12 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3">
-                                                    <input v-model.number="variant.price" type="number" min="0" step="0.01" required placeholder="0.00" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] text-right bg-white" />
+                                                    <input v-model.number="variant.price" type="number" min="0" step="0.01" required placeholder="0.00" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] text-right bg-white" :class="{ 'border-red-400': errors.variantRows[vi]?.price }" />
+                                                    <p v-if="errors.variantRows[vi]?.price" class="text-red-500 text-[10px] mt-0.5 text-right">{{ errors.variantRows[vi].price }}</p>
                                                 </td>
                                                 <td class="px-4 py-3">
-                                                    <input v-model.number="variant.stock" type="number" min="0" required placeholder="0" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] text-right bg-white" />
+                                                    <input v-model.number="variant.stock" type="number" min="0" required placeholder="0" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] text-right bg-white" :class="{ 'border-red-400': errors.variantRows[vi]?.stock }" />
+                                                    <p v-if="errors.variantRows[vi]?.stock" class="text-red-500 text-[10px] mt-0.5 text-right">{{ errors.variantRows[vi].stock }}</p>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -341,6 +347,7 @@ export default {
             loading: false,
             search: '',
             filterCategory: '',
+            errors: { title: '', variants: '', variantRows: [], optionGroups: [] },
             editingProduct: null,
             coverImageFile: null,
             coverImagePreview: null,
@@ -502,6 +509,7 @@ export default {
             await useProductsStore().deleteProduct(product.id)
         },
         async submitForm() {
+            if (!this.validate()) return
             this.loading = true
             const store = useProductsStore()
             
@@ -554,12 +562,54 @@ export default {
                 this.loading = false
             }
         },
+        clearErrors() {
+            this.errors = {
+                title: '',
+                variants: '',
+                variantRows: this.form.variants.map(() => ({ price: '', stock: '' })),
+                optionGroups: this.form.optionGroups.map(() => ({ name: '', options: '' })),
+            }
+        },
+        validate() {
+            this.clearErrors()
+            let valid = true
+            if (!this.form.title.trim()) {
+                this.errors.title = 'Product name is required.'
+                valid = false
+            }
+            if (this.form.variants.length === 0) {
+                this.errors.variants = 'At least one variant is required.'
+                valid = false
+            }
+            this.form.variants.forEach((v, i) => {
+                if (v.price == null || v.price === '' || Number(v.price) < 0) {
+                    this.errors.variantRows[i].price = 'Required'
+                    valid = false
+                }
+                if (v.stock == null || v.stock === '' || Number(v.stock) < 0) {
+                    this.errors.variantRows[i].stock = 'Must be ≥ 0'
+                    valid = false
+                }
+            })
+            this.form.optionGroups.forEach((g, i) => {
+                if (!g.name.trim()) {
+                    this.errors.optionGroups[i].name = 'Variation name is required.'
+                    valid = false
+                }
+                if (g.options.length === 0) {
+                    this.errors.optionGroups[i].options = 'Add at least one option.'
+                    valid = false
+                }
+            })
+            return valid
+        },
         closeForm() {
             this.showForm = false
             this.editingProduct = null
             this.coverImageFile = null
             this.coverImagePreview = null
             this.batch = { price: null, stock: null }
+            this.errors = { title: '', variants: '', variantRows: [], optionGroups: [] }
             this.form = {
                 title: '',
                 description: '',
