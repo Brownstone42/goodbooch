@@ -95,6 +95,32 @@ Do not overlap responsibilities unnecessarily.
 
 ---
 
+# Prompting Strategy
+
+When guiding Claude, keep prompts task-focused.
+
+Do not repeat constraints already defined in CLAUDE.md unless the task has special risk.
+
+Preferred Claude prompt format:
+
+- Read CLAUDE.md first.
+- State the task.
+- State expected behavior.
+- Mention only special exclusions if needed.
+- Ask Claude to report changed files and test steps.
+
+---
+
+# OpenAI Agent Behavior
+
+The OpenAI agent should guide one step at a time.
+
+Avoid long roadmap messages unless the user asks for a full plan.
+
+When the user says a step is done, provide only the next recommended step.
+
+---
+
 # Development Strategy
 
 Build systems incrementally using vertical slices.

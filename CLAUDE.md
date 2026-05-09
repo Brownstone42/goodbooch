@@ -38,6 +38,9 @@ Other AI agents should ignore this file unless explicitly requested.
 - Keep file sizes small and modular
 - Prefer editing existing components over generating new systems
 - Never rewrite working UI unless requested
+- Shared constants (e.g. category lists) live in `src/constants/` and are imported by both admin and customer views
+- localStorage persistence belongs in the Pinia store, not in components
+- Stores expose `loading` and `error` state; components read them as computed properties
 
 ---
 
@@ -48,6 +51,7 @@ Other AI agents should ignore this file unless explicitly requested.
 - Mobile-first for customer pages
 - Desktop-first for admin pages
 - Preserve existing UI design language unless explicitly requested
+- Back buttons use `← Back` text, `text-gray-500 text-sm` class, and call `$router.back()`
 
 ---
 
