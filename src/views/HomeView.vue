@@ -95,7 +95,7 @@
 
         <!-- Product Grid -->
         <div v-if="loading" class="flex justify-center items-center py-20">
-            <div class="w-8 h-8 border-4 border-[#005c3d] border-t-transparent rounded-full animate-spin"></div>
+            <LoadingSpinner />
         </div>
         <div v-else-if="error" class="mx-4 mt-8 bg-red-50 border border-red-200 text-red-600 text-sm rounded-2xl px-5 py-4 flex items-center justify-between">
             <span>{{ error }}</span>
@@ -178,9 +178,13 @@ import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { CATEGORIES } from '../constants/categories'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 export default {
     name: 'HomeView',
+    components: {
+        LoadingSpinner,
+    },
     data() {
         return {
             activeCategory: 'ทั้งหมด',

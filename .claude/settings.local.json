@@ -9,7 +9,8 @@
       "Bash(npm install *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Storage\\\\Antigravity\\\\appx\\\\goodbooch\\\\src\" -Recurse -File | Where-Object {$_.Extension -in @\\('.vue', '.js'\\)} | Select-Object FullName | Sort-Object FullName)"
     ]
   }
 }

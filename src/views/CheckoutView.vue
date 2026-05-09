@@ -183,7 +183,13 @@ export default {
                     total: this.total,
                     itemCount: this.items.reduce((sum, i) => sum + i.quantity, 0),
                 }
-                await useOrdersStore().createOrder(this.form)
+                await useOrdersStore().createOrder({
+                    ...this.form,
+                    items: this.items,
+                    userId: useAuthStore().user?.id ?? null,
+                    userProvider: useAuthStore().user?.provider ?? null,
+                })
+                useCartStore().clearCart()
                 this.orderSummary = snapshot
                 this.ordered = true
             } catch (e) {

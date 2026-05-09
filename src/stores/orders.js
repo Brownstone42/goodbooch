@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { collection, addDoc, getDocs, getDoc, doc, updateDoc, serverTimestamp, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
+
 function normalizeOrder(raw) {
     return {
         id: raw.id,
@@ -19,9 +20,7 @@ function normalizeOrder(raw) {
     }
 }
 
-import { useCartStore } from './cart'
 import { useProductsStore } from './products'
-import { useAuthStore } from './auth'
 
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
@@ -44,12 +43,11 @@ export const useOrdersStore = defineStore('orders', {
                 this.loading = false
             }
         },
-        async createOrder({ customerName, phone, address, note }) {
-            const cartStore = useCartStore()
+        async createOrder({ customerName, phone, address, note, items, userId, userProvider }) {
             const productsStore = useProductsStore()
             await productsStore.getProducts()
             const stockErrors = []
-            for (const item of cartStore.items) {
+            for (const item of items) {
                 const product = productsStore.products.find((p) => p.id === item.productId)
                 const variant = product?.variants?.find((v) => v.id === item.variantId)
                 const available = variant?.stock ?? 0
@@ -60,15 +58,14 @@ export const useOrdersStore = defineStore('orders', {
             if (stockErrors.length > 0) {
                 throw new Error(stockErrors.join('\n'))
             }
-            const authUser = useAuthStore().user
             await addDoc(collection(db, 'orders'), {
-                userId: authUser?.id ?? null,
-                userProvider: authUser?.provider ?? null,
+                userId: userId ?? null,
+                userProvider: userProvider ?? null,
                 customerName,
                 phone,
                 address,
                 note,
-                items: cartStore.items.map((item) => ({
+                items: items.map((item) => ({
                     id: item.key,
                     productId: item.productId,
                     variantId: item.variantId,
@@ -77,30 +74,29 @@ export const useOrdersStore = defineStore('orders', {
                     price: item.price,
                     quantity: item.quantity,
                 })),
-                totalPrice: cartStore.total,
+                totalPrice: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
                 status: 'pending',
                 createdAt: serverTimestamp(),
             })
             await Promise.all(
-                cartStore.items.map((item) =>
+                items.map((item) =>
                     productsStore.decrementVariantStock(item.productId, item.variantId, item.quantity)
                 )
             )
-            cartStore.clearCart()
         },
         async updateOrderStatus(orderId, status) {
             await updateDoc(doc(db, 'orders', orderId), { status })
             const order = this.orders.find((o) => o.id === orderId)
             if (order) order.status = status
         },
-        async fetchOrdersByUser(userId) {
+        async getOrdersByUser(userId) {
             const snapshot = await getDocs(query(collection(db, 'orders'), where('userId', '==', userId)))
             return snapshot.docs
                 .map((d) => ({ id: d.id, ...d.data() }))
                 .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
                 .map(normalizeOrder)
         },
-        async fetchOrderById(orderId) {
+        async getOrderById(orderId) {
             const snap = await getDoc(doc(db, 'orders', orderId))
             if (!snap.exists()) return null
             return normalizeOrder({ id: snap.id, ...snap.data() })

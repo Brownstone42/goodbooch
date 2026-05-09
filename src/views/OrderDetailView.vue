@@ -12,7 +12,7 @@
 
         <!-- Content -->
         <div v-if="loading" class="flex justify-center py-20">
-            <div class="w-8 h-8 border-4 border-[#005c3d] border-t-transparent rounded-full animate-spin"></div>
+            <LoadingSpinner />
         </div>
         
         <div v-else-if="!order" class="px-4 py-20 text-center">
@@ -97,9 +97,13 @@
 <script>
 import { useAuthStore } from '../stores/auth'
 import { useOrdersStore } from '../stores/orders'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 export default {
     name: 'OrderDetailView',
+    components: {
+        LoadingSpinner,
+    },
     data() {
         return {
             loading: true,
@@ -113,7 +117,7 @@ export default {
         async fetchOrderDetails() {
             this.loading = true
             try {
-                const order = await useOrdersStore().fetchOrderById(this.$route.params.id)
+                const order = await useOrdersStore().getOrderById(this.$route.params.id)
                 const userId = useAuthStore().user?.id
                 if (order && order.userId === userId) {
                     this.order = order
