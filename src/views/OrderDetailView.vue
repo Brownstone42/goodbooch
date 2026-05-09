@@ -95,45 +95,35 @@
 </template>
 
 <script>
+import { useAuthStore } from '../stores/auth'
+import { useOrdersStore } from '../stores/orders'
+
 export default {
     name: 'OrderDetailView',
     data() {
         return {
             loading: true,
-            order: null
+            order: null,
         }
     },
     mounted() {
         this.fetchOrderDetails()
     },
     methods: {
-        fetchOrderDetails() {
+        async fetchOrderDetails() {
             this.loading = true
-            
-            // Mock data instead of Firebase logic
-            setTimeout(() => {
-                const id = this.$route.params.id
-                
-                // Mock order generator based on ID
-                this.order = {
-                    id: id,
-                    date: new Date('2026-05-08T10:30:00'),
-                    status: id === 'ORD-12345' ? 'shipped' : 'pending',
-                    totalPrice: 1250.00,
-                    customer: {
-                        name: 'John Doe',
-                        phone: '081-234-5678',
-                        address: '123 Sukhumvit Road, Klongtoey, Bangkok 10110'
-                    },
-                    items: [
-                        { id: 1, title: 'Premium Collagen', imageUrl: null, quantity: 2, price: 500, variantLabel: 'Pack of 30' },
-                        { id: 2, title: 'Vitamin C Plus', imageUrl: null, quantity: 1, price: 250, variantLabel: null }
-                    ]
+            try {
+                const order = await useOrdersStore().fetchOrderById(this.$route.params.id)
+                const userId = useAuthStore().user?.id
+                if (order && order.userId === userId) {
+                    this.order = order
                 }
-                
+            } catch (e) {
+                // order stays null → shows "Order Not Found"
+            } finally {
                 this.loading = false
-            }, 500)
-        }
-    }
+            }
+        },
+    },
 }
 </script>

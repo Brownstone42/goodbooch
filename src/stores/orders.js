@@ -1,6 +1,24 @@
 import { defineStore } from 'pinia'
-import { collection, addDoc, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, getDocs, getDoc, doc, updateDoc, serverTimestamp, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
+function normalizeOrder(raw) {
+    return {
+        id: raw.id,
+        date: raw.createdAt?.toDate?.() ?? null,
+        status: raw.status,
+        totalPrice: raw.totalPrice,
+        userId: raw.userId,
+        customer: {
+            name: raw.customerName,
+            phone: raw.phone,
+            address: raw.address,
+            addressLine: raw.address,
+        },
+        items: raw.items || [],
+        note: raw.note,
+    }
+}
+
 import { useCartStore } from './cart'
 import { useProductsStore } from './products'
 import { useAuthStore } from './auth'
@@ -74,6 +92,18 @@ export const useOrdersStore = defineStore('orders', {
             await updateDoc(doc(db, 'orders', orderId), { status })
             const order = this.orders.find((o) => o.id === orderId)
             if (order) order.status = status
+        },
+        async fetchOrdersByUser(userId) {
+            const snapshot = await getDocs(query(collection(db, 'orders'), where('userId', '==', userId)))
+            return snapshot.docs
+                .map((d) => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+                .map(normalizeOrder)
+        },
+        async fetchOrderById(orderId) {
+            const snap = await getDoc(doc(db, 'orders', orderId))
+            if (!snap.exists()) return null
+            return normalizeOrder({ id: snap.id, ...snap.data() })
         },
     },
 })
