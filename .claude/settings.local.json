@@ -10,7 +10,12 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Storage\\\\Antigravity\\\\appx\\\\goodbooch\\\\src\" -Recurse -File | Where-Object {$_.Extension -in @\\('.vue', '.js'\\)} | Select-Object FullName | Sort-Object FullName)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Storage\\\\Antigravity\\\\appx\\\\goodbooch\\\\src\" -Recurse -File | Where-Object {$_.Extension -in @\\('.vue', '.js'\\)} | Select-Object FullName | Sort-Object FullName)",
+      "PowerShell(Get-Command *)"
     ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
   }
 }

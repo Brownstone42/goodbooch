@@ -56,10 +56,29 @@
             </div>
         </div>
 
+        <!-- Search Section -->
+        <div class="px-6 mt-3">
+            <div class="h-12 rounded-full bg-white shadow-md border border-gray-100 flex items-center px-4 gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.1-5.15a6.25 6.25 0 11-12.5 0 6.25 6.25 0 0112.5 0z" />
+                </svg>
+                <span class="text-sm text-gray-400 truncate">ค้นหา กู๊ดบู๊ชในไตรด์...</span>
+            </div>
+        </div>
+
         <!-- Hero Section -->
         <div class="px-4 mt-4">
-            <div class="relative aspect-[16/9] rounded-2xl overflow-hidden group">
-                <img src="/images/hero.png" alt="Hero" class="w-full h-full object-cover" />
+            <div
+                class="relative aspect-[16/9] rounded-2xl overflow-hidden group"
+                @touchstart.passive="handleHeroTouchStart"
+                @touchend="handleHeroTouchEnd"
+            >
+                <img
+                    :src="currentHeroImage"
+                    alt="Hero"
+                    class="w-full h-full object-cover transition-all duration-500 ease-out"
+                    :class="heroImageClasses"
+                />
                 <div class="absolute inset-0 bg-black/30 flex flex-col justify-center px-6">
                     <h2 class="text-white text-xl font-medium leading-tight">
                         เวชภัณฑ์ครบครัน สั่งง่าย<br />ส่งตรงถึงมือคุณ
@@ -67,10 +86,15 @@
                 </div>
                 <!-- Slider Dots -->
                 <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-white/50"></div>
-                    <div class="w-2 h-2 rounded-full bg-white"></div>
-                    <div class="w-2 h-2 rounded-full bg-white/50"></div>
-                    <div class="w-2 h-2 rounded-full bg-white/50"></div>
+                    <button
+                        v-for="(image, index) in heroImages"
+                        :key="image"
+                        type="button"
+                        class="w-2 h-2 rounded-full transition-colors"
+                        :class="index === activeHeroIndex ? 'bg-white' : 'bg-white/50'"
+                        :aria-label="`Show hero image ${index + 1}`"
+                        @click="selectHeroImage(index)"
+                    ></button>
                 </div>
             </div>
         </div>
@@ -101,41 +125,36 @@
             <span>{{ error }}</span>
             <button @click="retry" class="text-red-600 font-semibold underline text-sm ml-4">Retry</button>
         </div>
-        <div v-else class="grid grid-cols-2 gap-x-3 gap-y-6 px-4 mt-8">
+        <div v-else class="grid grid-cols-2 gap-3 px-4 mt-8">
             <div 
                 v-for="product in products" 
                 :key="product.id"
-                class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col h-full"
+                class="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 flex flex-col h-full"
             >
-                <div class="relative aspect-[4/3]">
-                    <router-link :to="'/product/' + product.id">
+                <div class="aspect-[1/1] bg-gray-50">
+                    <router-link :to="'/product/' + product.id" class="block w-full h-full">
                         <img :src="product.imageUrl || '/images/mask.png'" :alt="product.title" class="w-full h-full object-cover" />
                     </router-link>
-                    <button class="absolute top-3 right-3 text-white drop-shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                    </button>
                 </div>
-                <div class="p-4 flex-1 flex flex-col">
+                <div class="px-2.5 pt-2 pb-2 flex-1 flex flex-col">
                     <router-link :to="'/product/' + product.id" class="flex-1">
-                        <h4 class="text-sm font-medium text-gray-800 line-clamp-2 leading-tight min-h-[2.5rem]">
+                        <h4 class="text-sm font-semibold text-brand leading-tight truncate">
                             {{ product.title }}
                         </h4>
-                        <p class="text-[11px] text-gray-400 mt-1 uppercase">
+                        <p class="text-[11px] text-gray-500 mt-1 truncate">
                             {{ product.description }}
                         </p>
                     </router-link>
-                    <div class="flex items-end justify-between mt-3">
-                        <div>
-                            <span class="text-lg font-bold text-gray-900">{{ product.displayPrice.toFixed(2) }}</span>
-                            <span class="text-sm text-gray-500 ml-1">บาท</span>
+                    <div class="flex items-end justify-between gap-2 mt-1">
+                        <div class="min-w-0">
+                            <span class="text-2xl font-extrabold text-brand leading-none">฿{{ product.displayPrice.toFixed(0) }}</span>
                         </div>
                         <button 
                             @click="addToCart(product)"
-                            class="bg-brand text-white p-2 rounded-full hover:bg-brand-dark transition-colors"
+                            class="bg-brand text-white w-8 h-8 rounded-full hover:bg-brand-dark transition-colors flex items-center justify-center shrink-0 shadow-sm"
+                            aria-label="Add to cart"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
                             </svg>
                         </button>
@@ -189,14 +208,43 @@ export default {
         return {
             activeCategory: 'ทั้งหมด',
             isMenuOpen: false,
+            activeHeroIndex: 0,
+            heroTimer: null,
+            isAutoHeroAnimating: false,
+            isSwipeHeroAnimating: false,
+            heroSwipeDirection: null,
+            heroTouchStartX: 0,
+            heroTouchStartY: 0,
+            heroImages: [
+                '/images/hero1.png',
+                '/images/hero2.png',
+                '/images/hero3.png',
+                '/images/hero4.png',
+            ],
         }
     },
     mounted() {
         useProductsStore().getProducts()
+        this.startHeroTimer()
+    },
+    beforeUnmount() {
+        this.stopHeroTimer()
     },
     computed: {
         isAuthenticated() { return useAuthStore().isAuthenticated },
         userInitial() { return (useAuthStore().user?.name || '?')[0].toUpperCase() },
+        currentHeroImage() {
+            return this.heroImages[this.activeHeroIndex]
+        },
+        heroImageClasses() {
+            if (this.isAutoHeroAnimating) return 'opacity-0 scale-105'
+            if (this.isSwipeHeroAnimating) {
+                return this.heroSwipeDirection === 'next'
+                    ? 'opacity-90 -translate-x-3'
+                    : 'opacity-90 translate-x-3'
+            }
+            return 'opacity-100 scale-100 translate-x-0'
+        },
         allActiveProducts() {
             return useProductsStore().products.filter((p) => p.isActive)
         },
@@ -220,6 +268,55 @@ export default {
     methods: {
         retry() {
             useProductsStore().getProducts()
+        },
+        startHeroTimer() {
+            this.stopHeroTimer()
+            this.heroTimer = window.setInterval(this.nextHeroImage, 5000)
+        },
+        stopHeroTimer() {
+            if (!this.heroTimer) return
+            window.clearInterval(this.heroTimer)
+            this.heroTimer = null
+        },
+        nextHeroImage() {
+            this.isAutoHeroAnimating = true
+            window.setTimeout(() => {
+                this.activeHeroIndex = (this.activeHeroIndex + 1) % this.heroImages.length
+                this.isAutoHeroAnimating = false
+            }, 250)
+        },
+        selectHeroImage(index) {
+            this.isAutoHeroAnimating = false
+            this.isSwipeHeroAnimating = false
+            this.activeHeroIndex = index
+            this.startHeroTimer()
+        },
+        changeHeroBySwipe(direction) {
+            this.isAutoHeroAnimating = false
+            this.isSwipeHeroAnimating = true
+            this.heroSwipeDirection = direction
+            window.setTimeout(() => {
+                if (direction === 'next') {
+                    this.activeHeroIndex = (this.activeHeroIndex + 1) % this.heroImages.length
+                } else {
+                    this.activeHeroIndex = (this.activeHeroIndex - 1 + this.heroImages.length) % this.heroImages.length
+                }
+                this.isSwipeHeroAnimating = false
+                this.heroSwipeDirection = null
+            }, 180)
+            this.startHeroTimer()
+        },
+        handleHeroTouchStart(event) {
+            const touch = event.changedTouches[0]
+            this.heroTouchStartX = touch.clientX
+            this.heroTouchStartY = touch.clientY
+        },
+        handleHeroTouchEnd(event) {
+            const touch = event.changedTouches[0]
+            const deltaX = touch.clientX - this.heroTouchStartX
+            const deltaY = touch.clientY - this.heroTouchStartY
+            if (Math.abs(deltaX) < 40 || Math.abs(deltaX) < Math.abs(deltaY)) return
+            this.changeHeroBySwipe(deltaX < 0 ? 'next' : 'prev')
         },
         addToCart(product) {
             if (!product.variants?.length) return
