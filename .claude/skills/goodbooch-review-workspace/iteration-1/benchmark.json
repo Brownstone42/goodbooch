@@ -1,0 +1,50 @@
+{
+  "skill_name": "goodbooch-review",
+  "iteration": 1,
+  "configurations": [
+    {
+      "name": "with_skill",
+      "evals": [
+        {
+          "eval_id": 1,
+          "eval_name": "back-button-check",
+          "pass_rate": 1.0,
+          "total_tokens": 17969,
+          "duration_ms": 38322
+        },
+        {
+          "eval_id": 2,
+          "eval_name": "orders-store-check",
+          "pass_rate": 1.0,
+          "total_tokens": 22208,
+          "duration_ms": 62177
+        },
+        {
+          "eval_id": 3,
+          "eval_name": "clean-file-check",
+          "pass_rate": 1.0,
+          "total_tokens": 21651,
+          "duration_ms": 41908
+        }
+      ],
+      "aggregate": {
+        "mean_pass_rate": 1.0,
+        "mean_tokens": 20609,
+        "mean_duration_ms": 47469
+      }
+    },
+    {
+      "name": "without_skill",
+      "evals": [
+        {
+          "eval_id": 1,
+          "eval_name": "back-button-check",
+          "pass_rate": null,
+          "total_tokens": 16220,
+          "duration_ms": 44453,
+          "note": "baseline run — no assertions graded (different format output)"
+        }
+      ]
+    }
+  ]
+}

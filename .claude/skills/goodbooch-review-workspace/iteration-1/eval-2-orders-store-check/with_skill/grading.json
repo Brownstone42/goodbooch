@@ -1,0 +1,23 @@
+{
+  "eval_id": 2,
+  "eval_name": "orders-store-check",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "no_firebase_in_component: R3 passes for AdminOrders.vue",
+      "passed": true,
+      "evidence": "AdminOrders.vue Pass section explicitly states 'R3 (no Firebase imports in the component — all access goes through useOrdersStore())'"
+    },
+    {
+      "text": "detects_R7_loading_error_gap: Flags async actions missing loading/error state in orders.js",
+      "passed": true,
+      "evidence": "R7 violation clearly identifies createOrder, updateOrderStatus, getOrdersByUser, getOrderById as missing loading/error management with line numbers"
+    },
+    {
+      "text": "detects_R8_status_constants: Flags hardcoded 'pending'/'shipped' as R8 violation",
+      "passed": true,
+      "evidence": "R8 violation identified in both files with specific line numbers and suggested fix to create src/constants/orderStatuses.js"
+    }
+  ],
+  "pass_rate": 1.0
+}

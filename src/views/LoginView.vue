@@ -9,7 +9,7 @@
             <h1 class="text-2xl font-bold mb-6">My Profile</h1>
 
             <div class="bg-gray-50 rounded-2xl p-5 mb-6 flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-[#005c3d] text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
+                <div class="w-14 h-14 rounded-full bg-brand text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
                     {{ userInitial }}
                 </div>
                 <div>
@@ -41,7 +41,7 @@
                         type="text"
                         placeholder="Your full name"
                         autocomplete="name"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                     />
                 </div>
 
@@ -52,14 +52,14 @@
                         type="tel"
                         placeholder="Phone number"
                         autocomplete="tel"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:border-transparent"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                     />
                 </div>
 
                 <button
                     type="submit"
                     :disabled="loading"
-                    class="w-full bg-[#005c3d] text-white py-3.5 rounded-xl text-base font-medium disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+                    class="w-full bg-brand text-white py-3.5 rounded-xl text-base font-medium disabled:opacity-60 disabled:cursor-not-allowed mt-2"
                 >
                     {{ loading ? 'Signing in...' : 'Continue' }}
                 </button>

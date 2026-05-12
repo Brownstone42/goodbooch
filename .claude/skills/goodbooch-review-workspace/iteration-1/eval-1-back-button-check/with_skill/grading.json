@@ -1,0 +1,28 @@
+{
+  "eval_id": 1,
+  "eval_name": "back-button-check",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "correctly_passes_R4: Report correctly identifies R4 as passing",
+      "passed": true,
+      "evidence": "Review Summary and Pass section both list 'R4 (back button format)' as passing"
+    },
+    {
+      "text": "detects_R7_warning: Report flags missing 'error' computed property",
+      "passed": true,
+      "evidence": "Warning on lines 71-73 explicitly calls out missing error computed property reading from useProductsStore()"
+    },
+    {
+      "text": "passes_R1_R2_R3: R1, R2, R3 explicitly marked passing",
+      "passed": true,
+      "evidence": "Pass section lists R1, R2, R3 all as compliant"
+    },
+    {
+      "text": "structured_output: Output includes a summary section",
+      "passed": true,
+      "evidence": "Report ends with '## Review Summary' section including file count, violation count, and warnings"
+    }
+  ],
+  "pass_rate": 1.0
+}

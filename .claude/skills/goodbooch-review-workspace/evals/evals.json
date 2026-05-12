@@ -1,0 +1,72 @@
+{
+  "skill_name": "goodbooch-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run /goodbooch-review on src/views/ProductView.vue",
+      "expected_output": "R4 passes (back button line 4 is compliant). Warning about missing 'error' computed property (R7 partial). R1, R2, R3, R5, R6 all pass.",
+      "files": ["C:\\Storage\\Antigravity\\appx\\goodbooch\\src\\views\\ProductView.vue"],
+      "assertions": [
+        {
+          "name": "correctly_passes_R4",
+          "description": "Report correctly identifies R4 as passing — back button at line 4 has '← Back' text, correct classes, and $router.back()"
+        },
+        {
+          "name": "detects_R7_warning",
+          "description": "Report flags missing 'error' computed property — either as a violation or warning under R7"
+        },
+        {
+          "name": "passes_R1_R2_R3",
+          "description": "R1 (Options API), R2 (section order), and R3 (no Firebase) are explicitly marked passing"
+        },
+        {
+          "name": "structured_output",
+          "description": "Output includes a summary section or verdict at the end"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Check src/stores/orders.js and src/views/admin/AdminOrders.vue for compliance with project rules",
+      "expected_output": "R3 passes for AdminOrders.vue. R7 violations in orders.js (async actions missing loading/error). R8 violation for hardcoded status strings. R3 passes.",
+      "files": [
+        "C:\\Storage\\Antigravity\\appx\\goodbooch\\src\\stores\\orders.js",
+        "C:\\Storage\\Antigravity\\appx\\goodbooch\\src\\views\\admin\\AdminOrders.vue"
+      ],
+      "assertions": [
+        {
+          "name": "no_firebase_in_component",
+          "description": "R3 passes for AdminOrders.vue — no Firebase direct import violations cited"
+        },
+        {
+          "name": "detects_R7_loading_error_gap",
+          "description": "Report flags that some async actions in orders.js do not set loading/error state (R7 violation)"
+        },
+        {
+          "name": "detects_R8_status_constants",
+          "description": "Report flags hardcoded 'pending'/'shipped' status strings as R8 violation (should be in src/constants/)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/goodbooch-review src/views/HomeView.vue",
+      "expected_output": "R5 violation for raw CSS .no-scrollbar in style block. All other rules pass. Report covers all 8 rules.",
+      "files": ["C:\\Storage\\Antigravity\\appx\\goodbooch\\src\\views\\HomeView.vue"],
+      "assertions": [
+        {
+          "name": "detects_R5_css_violation",
+          "description": "Report flags raw CSS in <style> block (.no-scrollbar or webkit-scrollbar) as an R5 violation"
+        },
+        {
+          "name": "passes_R1_R2_R3_R6_R7_R8",
+          "description": "No violations for R1, R2, R3, R6, R7, R8 in HomeView.vue"
+        },
+        {
+          "name": "structured_output",
+          "description": "Output includes a '## Review Summary' or summary verdict section"
+        }
+      ]
+    }
+  ]
+}

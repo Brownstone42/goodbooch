@@ -8,7 +8,7 @@
             <div class="flex items-center gap-3">
                 <select
                     v-model="filterCategory"
-                    class="px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all"
+                    class="px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:bg-white transition-all"
                 >
                     <option value="">All Categories</option>
                     <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
@@ -21,12 +21,12 @@
                         v-model="search"
                         type="text"
                         placeholder="Search products..."
-                        class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all w-56"
+                        class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:bg-white transition-all w-56"
                     />
                 </div>
                 <button
                     @click="showForm = true"
-                    class="bg-[#005c3d] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#004d33] transition-all transform active:scale-95"
+                    class="bg-brand text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-brand-dark transition-all transform active:scale-95"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -71,7 +71,7 @@
                                     <img :src="product.imageUrl || '/images/mask.png'" :alt="product.title" class="w-full h-full object-cover" />
                                 </div>
                                 <div>
-                                    <p class="font-bold text-slate-900 group-hover:text-[#005c3d] transition-colors">{{ product.title }}</p>
+                                    <p class="font-bold text-slate-900 group-hover:text-brand transition-colors">{{ product.title }}</p>
                                     <p class="text-xs text-slate-500 mt-0.5 line-clamp-1 max-w-[200px]">{{ product.description }}</p>
                                 </div>
                             </div>
@@ -94,7 +94,7 @@
                         </td>
                         <td class="px-8 py-5">
                             <details class="group cursor-pointer" v-if="product.variants?.length">
-                                <summary class="text-xs font-bold text-[#005c3d] hover:underline list-none flex items-center gap-1 focus:outline-none">
+                                <summary class="text-xs font-bold text-brand hover:underline list-none flex items-center gap-1 focus:outline-none">
                                     {{ product.variants.length }} variant{{ product.variants.length === 1 ? '' : 's' }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -138,7 +138,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <button class="w-10 h-10 rounded-lg bg-[#005c3d] text-white font-bold text-sm">1</button>
+                <button class="w-10 h-10 rounded-lg bg-brand text-white font-bold text-sm">1</button>
                 <button class="p-2 rounded-lg border border-slate-200 bg-white text-slate-400 disabled:opacity-50" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

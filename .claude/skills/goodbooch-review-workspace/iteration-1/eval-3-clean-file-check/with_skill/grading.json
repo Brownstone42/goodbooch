@@ -1,0 +1,23 @@
+{
+  "eval_id": 3,
+  "eval_name": "clean-file-check",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "detects_R5_css_violation: Flags raw CSS in <style> block as R5 violation",
+      "passed": true,
+      "evidence": "R5 violation on lines 247-253 flagged for .no-scrollbar raw CSS — webkit-scrollbar and scrollbar-width properties identified"
+    },
+    {
+      "text": "passes_R1_R2_R3_R6_R7_R8: No violations for those rules",
+      "passed": true,
+      "evidence": "Pass section explicitly lists R1, R2, R3, R4 (N/A), R6, R7, R8 all as compliant"
+    },
+    {
+      "text": "structured_output: Output includes a '## Review Summary' section",
+      "passed": true,
+      "evidence": "Report ends with '## Review Summary' section with file count, violation count, and priority fixes list"
+    }
+  ],
+  "pass_rate": 1.0
+}

@@ -1,8 +1,8 @@
 <template>
     <aside class="w-64 bg-slate-900 text-white flex flex-col h-screen sticky top-0">
         <div class="p-6 flex items-center gap-3">
-            <div class="w-8 h-8 bg-[#005c3d] rounded-lg flex items-center justify-center font-bold text-white">G</div>
-            <span class="text-xl font-bold tracking-tight">Goodbooch <span class="text-[#005c3d]">Admin</span></span>
+            <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-white">G</div>
+            <span class="text-xl font-bold tracking-tight">Goodbooch <span class="text-brand">Admin</span></span>
         </div>
 
         <nav class="flex-1 mt-6 px-4 space-y-1">
@@ -14,7 +14,7 @@
                 :href="item.to ? undefined : '#'"
                 :class="[
                     'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group',
-                    isActive(item) ? 'bg-[#005c3d] text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    isActive(item) ? 'bg-brand text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 ]"
             >
                 <div class="w-5 h-5 flex-shrink-0" v-html="item.svg"></div>

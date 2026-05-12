@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "orders-store-check",
+  "prompt": "Check src/stores/orders.js and src/views/admin/AdminOrders.vue for compliance with project rules",
+  "assertions": []
+}

@@ -6,6 +6,7 @@
         <div v-if="loading" class="flex justify-center items-center py-32">
             <div class="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin"></div>
         </div>
+        <div v-else-if="error" class="p-8 text-center text-red-500 text-sm">{{ error }}</div>
         <div v-else-if="product">
             <img
                 :src="displayImage"
@@ -70,6 +71,9 @@ export default {
         },
         loading() {
             return useProductsStore().loading
+        },
+        error() {
+            return useProductsStore().error
         },
         selectedVariant() {
             if (!this.product?.variants) return null

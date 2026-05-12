@@ -2,11 +2,7 @@
     <div class="bg-[#f8f9fa] min-h-screen pb-10">
         <!-- Header -->
         <header class="bg-white px-4 py-4 flex items-center sticky top-0 z-50 shadow-sm">
-            <button @click="$router.back()" class="text-gray-500 mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-            </button>
+            <button @click="$router.back()" class="text-gray-500 text-sm mr-4">← Back</button>
             <h1 class="text-lg font-bold text-gray-900">Purchase History</h1>
         </header>
 
@@ -19,7 +15,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </template>
-                <router-link to="/login" class="inline-block bg-[#005c3d] text-white font-medium px-6 py-2.5 rounded-full">
+                <router-link to="/login" class="inline-block bg-brand text-white font-medium px-6 py-2.5 rounded-full">
                     Sign In
                 </router-link>
             </EmptyState>
@@ -44,7 +40,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
                     </template>
-                    <router-link to="/" class="inline-block bg-[#005c3d] text-white font-medium px-6 py-2.5 rounded-full">
+                    <router-link to="/" class="inline-block bg-brand text-white font-medium px-6 py-2.5 rounded-full">
                         Start Shopping
                     </router-link>
                 </EmptyState>
@@ -64,7 +60,7 @@
                             </div>
                             <span :class="[
                                 'text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide',
-                                order.status === 'shipped' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                order.status === ORDER_STATUSES.SHIPPED ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                             ]">
                                 {{ order.status }}
                             </span>
@@ -90,7 +86,7 @@
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="text-xs text-gray-500 mb-1">Total</p>
-                                <p class="text-sm font-bold text-[#005c3d]">฿{{ order.totalPrice.toFixed(2) }}</p>
+                                <p class="text-sm font-bold text-brand">฿{{ order.totalPrice.toFixed(2) }}</p>
                             </div>
                         </div>
                     </div>
@@ -106,6 +102,7 @@ import LoadingSpinner from '../components/LoadingSpinner.vue'
 import { formatDateTH } from '../utils/formatDate'
 import { useAuthStore } from '../stores/auth'
 import { useOrdersStore } from '../stores/orders'
+import { ORDER_STATUSES } from '../constants/orderStatuses'
 
 export default {
     name: 'PurchaseHistoryView',

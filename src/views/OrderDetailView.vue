@@ -2,11 +2,7 @@
     <div class="bg-[#f8f9fa] min-h-screen pb-10">
         <!-- Header -->
         <header class="bg-white px-4 py-4 flex items-center sticky top-0 z-50 shadow-sm border-b border-gray-100">
-            <button @click="$router.back()" class="text-gray-500 mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-            </button>
+            <button @click="$router.back()" class="text-gray-500 text-sm mr-4">← Back</button>
             <h1 class="text-lg font-bold text-gray-900">Order Detail</h1>
         </header>
 
@@ -17,7 +13,7 @@
         
         <div v-else-if="!order" class="px-4 py-20 text-center">
             <h3 class="text-lg font-bold text-gray-900">Order Not Found</h3>
-            <button @click="$router.back()" class="mt-4 text-[#005c3d] font-medium underline">Go Back</button>
+            <button @click="$router.back()" class="mt-4 text-gray-500 text-sm">← Back</button>
         </div>
 
         <div v-else class="px-4 py-6 space-y-6">
@@ -31,7 +27,7 @@
                     <p class="text-xs text-gray-500 mb-1">Status</p>
                     <span :class="[
                         'text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide',
-                        order.status === 'shipped' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        order.status === ORDER_STATUSES.SHIPPED ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                     ]">
                         {{ order.status }}
                     </span>
@@ -86,7 +82,7 @@
                     </div>
                     <div class="flex justify-between text-base font-bold text-gray-900 mt-2 pt-2 border-t border-gray-50">
                         <span>Total</span>
-                        <span class="text-[#005c3d]">฿{{ order.totalPrice.toFixed(2) }}</span>
+                        <span class="text-brand">฿{{ order.totalPrice.toFixed(2) }}</span>
                     </div>
                 </div>
             </div>
@@ -97,6 +93,7 @@
 <script>
 import { useAuthStore } from '../stores/auth'
 import { useOrdersStore } from '../stores/orders'
+import { ORDER_STATUSES } from '../constants/orderStatuses'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 export default {

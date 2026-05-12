@@ -28,7 +28,7 @@
                             v-model="search"
                             type="text"
                             placeholder="Search orders..."
-                            class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#005c3d] focus:bg-white transition-all w-56"
+                            class="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:bg-white transition-all w-56"
                         />
                     </div>
                 </div>
@@ -73,7 +73,7 @@
                                         <div class="flex-1 min-w-0">
                                             <div class="flex justify-between items-start gap-2">
                                                 <p class="font-bold text-slate-900 text-sm truncate" :title="item.title">{{ item.title }}</p>
-                                                <span class="font-bold text-[#005c3d] text-sm bg-[#005c3d]/10 px-2 py-0.5 rounded-lg whitespace-nowrap">× {{ item.quantity }}</span>
+                                                <span class="font-bold text-brand text-sm bg-brand/10 px-2 py-0.5 rounded-lg whitespace-nowrap">× {{ item.quantity }}</span>
                                             </div>
                                             <p v-if="item.variantLabel" class="text-xs font-medium text-slate-500 mt-0.5 truncate bg-slate-100 inline-block px-2 py-0.5 rounded-md">{{ item.variantLabel }}</p>
                                             <p class="text-xs font-bold text-slate-700 mt-1.5">฿{{ (item.price * item.quantity).toFixed(2) }} <span class="text-[10px] text-slate-400 font-normal ml-1">(฿{{ item.price.toFixed(2) }} ea)</span></p>
@@ -89,12 +89,12 @@
                                     :value="order.status"
                                     @change="updateStatus(order.id, $event.target.value)"
                                     :class="[
-                                        'text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-[#005c3d] focus:outline-none',
-                                        order.status === 'shipped' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                        'text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-brand focus:outline-none',
+                                        order.status === ORDER_STATUSES.SHIPPED ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                     ]"
                                 >
-                                    <option value="pending">Pending</option>
-                                    <option value="shipped">Shipped</option>
+                                    <option :value="ORDER_STATUSES.PENDING">Pending</option>
+                                    <option :value="ORDER_STATUSES.SHIPPED">Shipped</option>
                                 </select>
                             </td>
                             <td class="px-8 py-5">
@@ -122,6 +122,7 @@ import AdminLayout from '../../components/admin/AdminLayout.vue'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import { formatDate } from '../../utils/formatDate'
 import { useOrdersStore } from '../../stores/orders'
+import { ORDER_STATUSES } from '../../constants/orderStatuses'
 
 export default {
     name: 'AdminOrders',
@@ -139,8 +140,8 @@ export default {
         statusOptions() {
             return [
                 { value: '', label: 'All' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'shipped', label: 'Shipped' },
+                { value: ORDER_STATUSES.PENDING, label: 'Pending' },
+                { value: ORDER_STATUSES.SHIPPED, label: 'Shipped' },
             ]
         },
         orders() {

@@ -3,7 +3,7 @@
         <!-- Top Header -->
         <header class="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
             <router-link to="/login" class="flex items-center justify-center w-9 h-9">
-                <div v-if="isAuthenticated" class="w-9 h-9 rounded-full bg-[#005c3d] text-white flex items-center justify-center text-sm font-bold">
+                <div v-if="isAuthenticated" class="w-9 h-9 rounded-full bg-brand text-white flex items-center justify-center text-sm font-bold">
                     {{ userInitial }}
                 </div>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -16,7 +16,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
-                    <span v-if="cartItemCount > 0" class="absolute -top-1 -right-1 bg-[#005c3d] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                    <span v-if="cartItemCount > 0" class="absolute -top-1 -right-1 bg-brand text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
                         {{ cartItemCount }}
                     </span>
                 </router-link>
@@ -84,7 +84,7 @@
                     :key="cat"
                     :class="[
                         'whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                        cat === activeCategory ? 'bg-[#005c3d] text-white' : 'bg-[#f1f3f5] text-gray-600'
+                        cat === activeCategory ? 'bg-brand text-white' : 'bg-[#f1f3f5] text-gray-600'
                     ]"
                     @click="activeCategory = cat"
                 >
@@ -133,7 +133,7 @@
                         </div>
                         <button 
                             @click="addToCart(product)"
-                            class="bg-[#005c3d] text-white p-2 rounded-full hover:bg-[#004d33] transition-colors"
+                            class="bg-brand text-white p-2 rounded-full hover:bg-brand-dark transition-colors"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
@@ -152,7 +152,7 @@
         </div>
 
         <!-- External Channels Section -->
-        <div class="mt-12 bg-[#005c3d] pt-8 pb-12 px-4 rounded-t-[40px]">
+        <div class="mt-12 bg-brand pt-8 pb-12 px-4 rounded-t-[40px]">
             <h3 class="text-white text-center text-lg font-medium mb-8">ช่องทางการสั่งซื้อ</h3>
             <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto">
                 <a href="#" class="bg-white p-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg">
