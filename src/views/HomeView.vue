@@ -253,7 +253,7 @@ export default {
         },
         products() {
             if (this.activeCategory === 'ทั้งหมด') return this.allActiveProducts
-            return this.allActiveProducts.filter((p) => p.category === this.activeCategory)
+            return this.allActiveProducts.filter((p) => this.productCategories(p).includes(this.activeCategory))
         },
         loading() {
             return useProductsStore().loading
@@ -268,6 +268,10 @@ export default {
     methods: {
         retry() {
             useProductsStore().getProducts()
+        },
+        productCategories(product) {
+            if (Array.isArray(product.categories)) return product.categories
+            return product.category ? [product.category] : []
         },
         startHeroTimer() {
             this.stopHeroTimer()

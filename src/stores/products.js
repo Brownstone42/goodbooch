@@ -39,7 +39,8 @@ export const useProductsStore = defineStore('products', {
                         )
                         data.displayPrice = data.variants[0].price
                         data.imageUrl = data.coverImageUrl || data.variants.find((v) => v.imageUrl)?.imageUrl || null
-                        data.category = data.category || ''
+                        data.categories = Array.isArray(data.categories) ? data.categories : (data.category ? [data.category] : [])
+                        data.category = data.categories[0] || ''
                         return data
                     })
                 )
@@ -49,11 +50,13 @@ export const useProductsStore = defineStore('products', {
                 this.loading = false
             }
         },
-        async createProduct({ title, description, category = '', isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
+        async createProduct({ title, description, category = '', categories = [], isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
+            const productCategories = Array.isArray(categories) ? categories : (category ? [category] : [])
             await addDoc(collection(db, 'products'), {
                 title,
                 description,
-                category,
+                category: productCategories[0] || '',
+                categories: productCategories,
                 isActive,
                 coverImagePath,
                 optionGroups,
@@ -68,11 +71,13 @@ export const useProductsStore = defineStore('products', {
             })
             await this.getProducts()
         },
-        async updateProduct(id, { title, description, category = '', isActive, coverImagePath, optionGroups = [], variants = [] }) {
+        async updateProduct(id, { title, description, category = '', categories = [], isActive, coverImagePath, optionGroups = [], variants = [] }) {
+            const productCategories = Array.isArray(categories) ? categories : (category ? [category] : [])
             await updateDoc(doc(db, 'products', id), {
                 title,
                 description,
-                category,
+                category: productCategories[0] || '',
+                categories: productCategories,
                 isActive,
                 coverImagePath: coverImagePath || null,
                 optionGroups,

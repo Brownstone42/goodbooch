@@ -77,8 +77,17 @@
                             </div>
                         </td>
                         <td class="px-8 py-5">
-                            <span class="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
-                                {{ product.category || 'Uncategorized' }}
+                            <div v-if="productCategories(product).length" class="flex flex-wrap gap-1.5 max-w-[220px]">
+                                <span
+                                    v-for="cat in productCategories(product)"
+                                    :key="cat"
+                                    class="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg"
+                                >
+                                    {{ cat }}
+                                </span>
+                            </div>
+                            <span v-else class="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+                                Uncategorized
                             </span>
                         </td>
                         <td class="px-8 py-5">
@@ -180,7 +189,7 @@ export default {
         products() {
             let all = useProductsStore().products
             if (this.filterCategory) {
-                all = all.filter((p) => p.category === this.filterCategory)
+                all = all.filter((p) => this.productCategories(p).includes(this.filterCategory))
             }
             if (!this.search.trim()) return all
             const q = this.search.toLowerCase()
@@ -214,6 +223,10 @@ export default {
         closeModal() {
             this.showForm = false
             this.editingProduct = null
+        },
+        productCategories(product) {
+            if (Array.isArray(product.categories)) return product.categories
+            return product.category ? [product.category] : []
         },
     },
 }

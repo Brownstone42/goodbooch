@@ -33,11 +33,32 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Category</label>
-                            <select v-model="form.category" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all">
-                                <option value="">— No category —</option>
-                                <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
-                            </select>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Categories</label>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <select v-model="selectedCategory" class="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all" :class="{ 'border-red-400': errors.categories }">
+                                    <option value="">— Select category —</option>
+                                    <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                                <button type="button" @click="addCategory" class="px-5 py-3 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-700 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!selectedCategory">
+                                    Add
+                                </button>
+                            </div>
+                            <div v-if="form.categories.length" class="flex flex-wrap gap-2 mt-3">
+                                <span
+                                    v-for="(cat, index) in form.categories"
+                                    :key="`${cat}-${index}`"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 text-brand text-sm font-semibold border border-brand/20"
+                                >
+                                    {{ cat }}
+                                    <button type="button" @click="removeCategory(index)" class="hover:text-red-600 focus:outline-none" aria-label="Remove category">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </span>
+                            </div>
+                            <p v-if="errors.categories" class="text-red-500 text-xs mt-1">{{ errors.categories }}</p>
+                            <p class="text-xs text-slate-400 mt-2">Use Add for each category. Leave empty if this product has no category.</p>
                         </div>
 
                         <div class="flex items-center gap-3 pt-2">
@@ -199,12 +220,13 @@ export default {
             loading: false,
             coverImageFile: null,
             coverImagePreview: null,
+            selectedCategory: '',
             batch: { price: null, stock: null },
-            errors: { title: '', variants: '', variantRows: [], optionGroups: [] },
+            errors: { title: '', categories: '', variants: '', variantRows: [], optionGroups: [] },
             form: {
                 title: '',
                 description: '',
-                category: '',
+                categories: [],
                 isActive: true,
                 optionGroups: [],
                 variants: [{ id: 'default', optionValues: [], price: null, stock: 0, imageFile: null, imagePreview: null, imagePath: null, imageUrl: null }],
@@ -225,11 +247,12 @@ export default {
         populateForm(product) {
             this.coverImagePreview = product.imageUrl || null
             this.coverImageFile = null
+            this.selectedCategory = ''
             this.batch = { price: null, stock: null }
             this.form = {
                 title: product.title || '',
                 description: product.description || '',
-                category: product.category || '',
+                categories: Array.isArray(product.categories) ? [...product.categories] : (product.category ? [product.category] : []),
                 isActive: product.isActive ?? true,
                 optionGroups: (product.optionGroups || []).map(g => ({
                     name: g.name,
@@ -264,6 +287,16 @@ export default {
                 this.form.variants[vi].imageFile = file
                 this.form.variants[vi].imagePreview = URL.createObjectURL(file)
             }
+        },
+        addCategory() {
+            if (!this.selectedCategory) return
+            this.form.categories.push(this.selectedCategory)
+            this.selectedCategory = ''
+            this.errors.categories = ''
+        },
+        removeCategory(index) {
+            this.form.categories.splice(index, 1)
+            this.errors.categories = ''
         },
         addOptionGroup() {
             this.form.optionGroups.push({ name: '', options: [], newOption: '' })
@@ -329,6 +362,7 @@ export default {
         clearErrors() {
             this.errors = {
                 title: '',
+                categories: '',
                 variants: '',
                 variantRows: this.form.variants.map(() => ({ price: '', stock: '' })),
                 optionGroups: this.form.optionGroups.map(() => ({ name: '', options: '' })),
@@ -339,6 +373,11 @@ export default {
             let valid = true
             if (!this.form.title.trim()) {
                 this.errors.title = 'Product name is required.'
+                valid = false
+            }
+            const uniqueCategories = new Set(this.form.categories)
+            if (uniqueCategories.size !== this.form.categories.length) {
+                this.errors.categories = 'Duplicate categories are not allowed.'
                 valid = false
             }
             if (this.form.variants.length === 0) {
@@ -396,7 +435,7 @@ export default {
                 const payload = {
                     title: this.form.title,
                     description: this.form.description,
-                    category: this.form.category,
+                    categories: this.form.categories,
                     isActive: this.form.isActive,
                     coverImagePath,
                     optionGroups,

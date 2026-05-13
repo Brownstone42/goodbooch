@@ -112,6 +112,7 @@ export default {
     },
     data() {
         return {
+            ORDER_STATUSES,
             loading: false,
             error: null,
             orders: [],
