@@ -1,8 +1,27 @@
 <template>
-    <div>
-        <div class="p-4">
-            <button @click="$router.back()" class="text-gray-500 text-sm">← Back</button>
-        </div>
+    <div class="relative">
+
+        <!-- Back button — overlaid top-left -->
+        <button
+            @click="$router.back()"
+            class="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-gray-500/60 flex items-center justify-center"
+            aria-label="Back"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+
+        <!-- Share button — overlaid top-right -->
+        <button
+            class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-gray-500/60 flex items-center justify-center"
+            aria-label="Share"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+        </button>
+
         <div v-if="loading" class="flex justify-center items-center py-32">
             <div class="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin"></div>
         </div>
@@ -96,27 +115,12 @@ export default {
             return this.selectedVariant?.stock ?? 0
         },
     },
-    watch: {
-        product(val) {
-            if (val) this.initOptions()
-        },
-    },
     mounted() {
         if (useProductsStore().products.length === 0) {
             useProductsStore().getProducts()
-        } else {
-            this.initOptions()
         }
     },
     methods: {
-        initOptions() {
-            if (!this.product?.optionGroups) return
-            const opts = {}
-            for (const group of this.product.optionGroups) {
-                opts[group.name] = group.options[0] ?? ''
-            }
-            this.selectedOptions = opts
-        },
         addToCart() {
             if (!this.selectedVariant) return
             const product = this.product

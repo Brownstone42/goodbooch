@@ -1,10 +1,14 @@
 <template>
     <div class="flex flex-col h-screen bg-gray-50">
-        <AppHeader v-if="showHeader" />
-        <div class="flex-1 overflow-y-auto">
+        <div v-if="showHeader" class="shrink-0">
+            <AppHeader />
+        </div>
+        <div class="flex-1 overflow-y-auto min-h-0">
             <router-view />
         </div>
-        <AppBottomNav v-if="showNav" />
+        <div v-if="showNav" class="shrink-0">
+            <AppBottomNav />
+        </div>
     </div>
 </template>
 
