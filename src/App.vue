@@ -1,35 +1,29 @@
 <template>
-    <div :class="['min-h-screen bg-gray-50', !isAdmin ? 'pb-16' : '']">
+    <div :class="['min-h-screen bg-gray-50', showNav ? 'pb-16' : '']">
+        <AppHeader v-if="showHeader" />
         <router-view />
-        <nav v-if="!isAdmin" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex sm:hidden">
-            <router-link
-                to="/"
-                class="flex-1 flex items-center justify-center py-3 text-sm text-gray-500"
-                active-class="text-black font-semibold"
-            >
-                Shop
-            </router-link>
-            <router-link
-                to="/cart"
-                class="flex-1 flex items-center justify-center py-3 text-sm text-gray-500"
-                active-class="text-black font-semibold"
-            >
-                Cart ({{ itemCount }})
-            </router-link>
-        </nav>
+        <AppBottomNav v-if="showNav" />
     </div>
 </template>
 
 <script>
-import { useCartStore } from './stores/cart'
+import AppHeader from './components/AppHeader.vue'
+import AppBottomNav from './components/AppBottomNav.vue'
 
 export default {
+    components: {
+        AppHeader,
+        AppBottomNav,
+    },
     computed: {
-        itemCount() {
-            return useCartStore().itemCount
-        },
         isAdmin() {
             return this.$route.path.startsWith('/admin')
+        },
+        showNav() {
+            return !this.isAdmin
+        },
+        showHeader() {
+            return !this.isAdmin && this.$route.path !== '/login'
         },
     },
 }

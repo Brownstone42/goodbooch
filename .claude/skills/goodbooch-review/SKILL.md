@@ -5,10 +5,13 @@ description: >
   CLAUDE.md architecture rules. Use this skill whenever the user asks to check compliance,
   run a project rules check, review a Vue file, or types /goodbooch-review. Also trigger
   automatically when code is generated or modified and a compliance check would be useful —
-  e.g., after adding a new component, editing a store, or implementing a feature. This skill
-  checks: Vue Options API usage, component section order, no direct Firebase in components,
-  back button format, TailwindCSS-only styling, localStorage in stores only, loading/error
-  state exposure, and constants placement.
+  e.g., after adding a new component, editing a store, implementing a feature, or creating
+  global layout components. This skill checks: Vue Options API usage, component section order,
+  no direct Firebase in components (including AppHeader/AppBottomNav and other layout files),
+  back button format, TailwindCSS-only styling (flags custom CSS that duplicates a Tailwind
+  utility), localStorage in stores only, loading/error state exposure, constants placement
+  (including image-mapping objects like CATEGORY_IMAGES), and data-mapping objects in
+  src/constants/.
 ---
 
 # Goodbooch Project Compliance Review
@@ -51,6 +54,9 @@ and suggest the minimal fix for each one.
 - Vue components (`.vue` files) must NOT import from `firebase/*` or `../firebase` or
   `../../firebase`.
 - All Firebase access goes through Pinia stores (`useXxxStore()`).
+- **This applies to every `.vue` file without exception** — including global layout components
+  like `AppHeader.vue`, `AppBottomNav.vue`, `App.vue`, and any future utility components.
+  Being a "layout" or "global" component is not a reason to bypass this rule.
 - **Violation signals:** `import { ... } from 'firebase/firestore'`,
   `import { db } from '../firebase'`, `getDoc(`, `setDoc(`, `collection(` in a `.vue` file.
 
@@ -70,6 +76,12 @@ and suggest the minimal fix for each one.
   truly cannot be expressed as a Tailwind class, e.g., a dynamic pixel value from data).
 - **Violation:** any raw CSS property in a `<style>` block that isn't an `@apply` or
   `@tailwind` directive; hard-coded hex colors in `:style` bindings.
+- **Special case — CSS that has a Tailwind equivalent:**
+  If a custom CSS rule (e.g., `display: -webkit-box; -webkit-line-clamp: 2`) replicates a
+  utility that Tailwind ships natively (e.g., `line-clamp-2` in Tailwind ≥ 3.3), that is a
+  **Violation**, not just a Warning. Before flagging as a Warning, check whether Tailwind
+  already provides the equivalent class. Only flag as a Warning when the CSS is genuinely
+  inexpressible via Tailwind (e.g., complex `@keyframes`, truly unique vendor extensions).
 
 ### R6 — localStorage in stores only
 - `localStorage.getItem`, `localStorage.setItem`, `localStorage.removeItem` must NOT appear
@@ -86,11 +98,17 @@ and suggest the minimal fix for each one.
 - **Violation in component:** component references store's loading/error in `data()` (local
   copy) instead of a `computed` that reads from the store.
 
-### R8 — Shared constants in src/constants/
+### R8 — Shared constants and data-mapping objects in src/constants/
 - Values that are reused across multiple files (category lists, status strings, route names)
   must live in `src/constants/*.js` and be imported from there.
+- **This extends to data-mapping objects**, not just flat string arrays. Any object that maps
+  identifiers to values shared across components belongs in `src/constants/`:
+  - Image maps: `{ 'Category Name': importedImage, ... }` → `CATEGORY_IMAGES` in `categories.js`
+  - Label maps: `{ statusCode: 'Display Label', ... }` → appropriate constants file
+  - Icon maps, color maps, route maps used in 2+ files
 - **Violation:** the same string literal appearing 3+ times across different files, or a
-  hardcoded list that already exists in `src/constants/`.
+  hardcoded list/map that already exists in `src/constants/`, or image/data mappings defined
+  inline inside a component rather than imported from `src/constants/`.
 
 ---
 

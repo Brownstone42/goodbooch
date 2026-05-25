@@ -8,6 +8,8 @@ import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import AdminOrders from '../views/admin/AdminOrders.vue'
 import PurchaseHistoryView from '../views/PurchaseHistoryView.vue'
 import OrderDetailView from '../views/OrderDetailView.vue'
+import CategoriesView from '../views/CategoriesView.vue'
+import QuoteView from '../views/QuoteView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +23,8 @@ const router = createRouter({
         { path: '/admin/orders', component: AdminOrders },
         { path: '/purchase-history', component: PurchaseHistoryView },
         { path: '/purchase-history/:id', component: OrderDetailView },
+        { path: '/categories', component: CategoriesView },
+        { path: '/quote', component: QuoteView },
     ],
 })
 
