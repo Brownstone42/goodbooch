@@ -1,7 +1,9 @@
 <template>
-    <div :class="['min-h-screen bg-gray-50', showNav ? 'pb-16' : '']">
+    <div class="flex flex-col h-screen bg-gray-50">
         <AppHeader v-if="showHeader" />
-        <router-view />
+        <div class="flex-1 overflow-y-auto">
+            <router-view />
+        </div>
         <AppBottomNav v-if="showNav" />
     </div>
 </template>

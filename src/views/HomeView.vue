@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-[#f8f9fa] min-h-screen pb-10">
+    <div class="bg-[#f8f9fa] pb-10">
 
         <!-- =====================================================================
              HERO BANNER (commented out — preserved for future use)

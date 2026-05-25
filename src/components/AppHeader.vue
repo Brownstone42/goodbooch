@@ -1,5 +1,5 @@
 <template>
-    <header class="bg-brand px-4 py-3 flex items-center gap-3 sticky top-0 z-50">
+    <header class="bg-brand px-4 py-3 flex items-center gap-3">
         <!-- Search Bar -->
         <div class="flex-1 bg-white rounded-full flex items-center px-4 h-11 gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

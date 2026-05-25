@@ -1,5 +1,5 @@
 <template>
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50">
+    <nav class="bg-white border-t border-gray-200 flex shrink-0">
         <!-- หน้าหลัก -->
         <router-link
             to="/"
