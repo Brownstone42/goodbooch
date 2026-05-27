@@ -1,8 +1,16 @@
 <template>
     <div class="bg-[#f8f9fa] min-h-screen pb-10">
         <!-- Header -->
-        <header class="bg-white px-4 py-4 flex items-center sticky top-0 z-50 shadow-sm">
-            <button @click="$router.back()" class="text-gray-500 text-sm mr-4">← Back</button>
+        <header class="bg-white px-4 py-4 flex items-center gap-3 sticky top-0 z-50 shadow-sm">
+            <button
+                @click="$router.back()"
+                class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center shrink-0"
+                aria-label="Back"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
             <h1 class="text-lg font-bold text-gray-900">ประวัติการสั่งซื้อ</h1>
         </header>
 
@@ -79,9 +87,10 @@
                                 <p v-if="order.items[0]?.variantLabel" class="text-xs text-gray-400 mt-0.5">{{ order.items[0]?.variantLabel }}</p>
                                 <p class="text-sm font-semibold text-gray-800 mt-0.5">฿{{ (order.items[0]?.price ?? 0).toFixed(2) }}</p>
                             </div>
-                            <span class="text-xs text-gray-400 flex-shrink-0 self-start mt-1">
-                                ทั้งหมด {{ order.items.length }} รายการ
-                            </span>
+                            <div class="flex flex-col items-end gap-1 flex-shrink-0 self-start mt-1">
+                                <span class="text-xs text-gray-400">x{{ order.items[0]?.quantity }}</span>
+                                <span class="text-xs text-gray-400">ทั้งหมด {{ order.items.length }} รายการ</span>
+                            </div>
                         </div>
 
                         <!-- Expanded: remaining items -->
@@ -142,6 +151,13 @@ import { useOrdersStore } from '../stores/orders'
 import { useCartStore } from '../stores/cart'
 import { useProductsStore } from '../stores/products'
 
+function resolveItemImage(item, productsStore) {
+    if (item.imageUrl) return item.imageUrl
+    const product = productsStore.getById(item.productId)
+    const variant = product?.variants?.find((v) => v.id === item.variantId)
+    return variant?.imageUrl || product?.coverImageUrl || product?.imageUrl || '/images/mask.png'
+}
+
 export default {
     name: 'PurchaseHistoryView',
     components: {
@@ -177,7 +193,18 @@ export default {
             this.loading = true
             this.error = null
             try {
-                this.orders = await useOrdersStore().getOrdersByUser(this.userId)
+                const productsStore = useProductsStore()
+                if (productsStore.products.length === 0) {
+                    await productsStore.getProducts()
+                }
+                const orders = await useOrdersStore().getOrdersByUser(this.userId)
+                this.orders = orders.map((order) => ({
+                    ...order,
+                    items: order.items.map((item) => ({
+                        ...item,
+                        imageUrl: resolveItemImage(item, productsStore),
+                    })),
+                }))
             } catch (e) {
                 this.error = 'Failed to load orders.'
             } finally {
@@ -196,8 +223,7 @@ export default {
         reorder(order) {
             const productsStore = useProductsStore()
             const cartItems = order.items.map((item) => {
-                const product = productsStore.getById(item.productId)
-                const variant = product?.variants?.find((v) => v.id === item.variantId)
+                const variant = productsStore.getById(item.productId)?.variants?.find((v) => v.id === item.variantId)
                 return {
                     key: item.id || `${item.productId}_${item.variantId}`,
                     productId: item.productId,
@@ -205,7 +231,7 @@ export default {
                     variantLabel: item.variantLabel || null,
                     title: item.title,
                     price: item.price,
-                    imageUrl: item.imageUrl || variant?.imageUrl || product?.coverImageUrl || product?.imageUrl || '/images/mask.png',
+                    imageUrl: item.imageUrl,
                     stock: variant?.stock,
                     quantity: item.quantity,
                 }

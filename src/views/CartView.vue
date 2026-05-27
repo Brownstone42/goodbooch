@@ -1,8 +1,23 @@
 <template>
     <div class="p-4">
-        <div class="flex items-center justify-between mb-4">
-            <button @click="$router.back()" class="text-gray-500 text-sm">← Back</button>
-            <h1 class="text-2xl font-bold">Cart</h1>
+        <div class="flex items-center gap-3 mb-4">
+            <button
+                @click="$router.back()"
+                class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center shrink-0"
+                aria-label="Back"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <h1 class="text-2xl font-bold flex-1">Cart</h1>
+            <button
+                v-if="items.length > 0"
+                @click="clearCart"
+                class="text-sm text-red-400 hover:text-red-600 transition-colors"
+            >
+                Clear all
+            </button>
         </div>
 
         <div v-if="items.length === 0" class="flex flex-col items-center justify-center mt-20 text-gray-400">
@@ -92,6 +107,9 @@ export default {
         },
         removeItem(key) {
             useCartStore().removeItem(key)
+        },
+        clearCart() {
+            useCartStore().clearCart()
         },
     },
 }
