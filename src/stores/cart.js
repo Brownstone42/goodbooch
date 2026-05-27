@@ -47,6 +47,20 @@ export const useCartStore = defineStore('cart', {
             }
             this._persist()
         },
+        reorderItems(items) {
+            this.items = items.map((item) => ({
+                key: item.key || `${item.productId}_${item.variantId}`,
+                productId: item.productId,
+                variantId: item.variantId,
+                variantLabel: item.variantLabel || null,
+                title: item.title,
+                price: item.price,
+                imageUrl: item.imageUrl || '/images/mask.png',
+                stock: item.stock,
+                quantity: item.quantity,
+            }))
+            this._persist()
+        },
         clearCart() {
             this.items = []
             this._persist()

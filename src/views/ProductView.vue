@@ -107,10 +107,13 @@
                 <div v-else class="mt-6 flex gap-3">
                     <button
                         @click="addToCart"
-                        :disabled="!selectedVariant || displayStock === 0"
-                        class="flex-1 border-2 border-brand text-brand bg-white py-3.5 rounded-xl text-base font-medium transition-colors hover:bg-brand hover:text-white disabled:opacity-40 disabled:pointer-events-none"
+                        :disabled="!selectedVariant || displayStock === 0 || addedToCart"
+                        class="flex-1 border-2 py-3.5 rounded-xl text-base font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        :class="addedToCart
+                            ? 'border-green-500 text-green-600 bg-green-50'
+                            : 'border-brand text-brand bg-white hover:bg-brand hover:text-white'"
                     >
-                        Add to Cart
+                        {{ addedToCart ? '✓ Added' : 'Add to Cart' }}
                     </button>
                     <button
                         @click="buyNow"
@@ -137,6 +140,7 @@ export default {
         return {
             selectedOptions: {},
             currentImageIndex: 0,
+            addedToCart: false,
         }
     },
     computed: {
@@ -175,6 +179,7 @@ export default {
             for (const v of this.product?.variants ?? []) {
                 if (v.imageUrl && !images.includes(v.imageUrl)) images.push(v.imageUrl)
             }
+
             return images
         },
         displayStock() {
@@ -197,8 +202,9 @@ export default {
         },
     },
     mounted() {
-        if (useProductsStore().products.length === 0) {
-            useProductsStore().getProducts()
+        const store = useProductsStore()
+        if (store.products.length === 0) {
+            store.getProducts()
         }
     },
     methods: {
@@ -231,7 +237,8 @@ export default {
         addToCart() {
             if (!this.selectedVariant) return
             useCartStore().addItem(this.buildCartItem())
-            this.$router.push('/cart')
+            this.addedToCart = true
+            setTimeout(() => { this.addedToCart = false }, 200)
         },
         buyNow() {
             if (!this.selectedVariant) return
