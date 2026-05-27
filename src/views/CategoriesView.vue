@@ -1,6 +1,17 @@
 <template>
     <div class="bg-[#f8f9fa] pb-6">
 
+        <!-- Quote mode banner -->
+        <div v-if="isQuoteMode" class="bg-brand/10 border-b border-brand/20 px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+                </svg>
+                <span class="text-xs font-semibold text-brand">กำลังเลือกสินค้าอ้างอิง — แตะสินค้าเพื่อเลือก</span>
+            </div>
+            <button @click="$router.back()" class="text-xs text-gray-500 font-medium">ยกเลิก</button>
+        </div>
+
         <!-- Category Pills -->
         <div class="pt-4 px-4">
             <div class="grid grid-cols-4 gap-2">
@@ -43,21 +54,21 @@
                     class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col h-full"
                 >
                     <div class="aspect-[1/1] bg-gray-50 relative">
-                        <router-link :to="'/product/' + product.id" class="block w-full h-full">
+                        <router-link :to="productPath(product.id)" class="block w-full h-full">
                             <img
                                 :src="product.imageUrl || '/images/mask.png'"
                                 :alt="product.title"
                                 class="w-full h-full object-cover"
                             />
                         </router-link>
-                        <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
+                        <button v-if="!isQuoteMode" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
                         </button>
                     </div>
                     <div class="px-2.5 pt-2 pb-2 flex-1 flex flex-col">
-                        <router-link :to="'/product/' + product.id" class="flex-1">
+                        <router-link :to="productPath(product.id)" class="flex-1">
                             <h4 class="text-sm font-semibold text-brand leading-tight truncate">
                                 {{ product.title }}
                             </h4>
@@ -70,6 +81,7 @@
                                 <span class="text-2xl font-extrabold text-brand leading-none">฿{{ product.displayPrice.toFixed(0) }}</span>
                             </div>
                             <button
+                                v-if="!isQuoteMode"
                                 @click="addToCart(product)"
                                 class="bg-brand text-white w-8 h-8 rounded-full hover:bg-brand-dark transition-colors flex items-center justify-center shrink-0 shadow-sm"
                                 aria-label="Add to cart"
@@ -128,8 +140,14 @@ export default {
         error() {
             return useProductsStore().error
         },
+        isQuoteMode() {
+            return this.$route.query.quoteMode === 'true'
+        },
     },
     methods: {
+        productPath(id) {
+            return this.isQuoteMode ? `/product/${id}?quoteMode=true` : `/product/${id}`
+        },
         retry() {
             useProductsStore().getProducts()
         },

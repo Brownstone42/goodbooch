@@ -7,7 +7,8 @@
             :class="isHome ? 'text-brand' : 'text-gray-400'"
         >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v7a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-7m-9 2h4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10" />
             </svg>
             <span class="text-[10px] font-medium leading-none">หน้าหลัก</span>
         </router-link>

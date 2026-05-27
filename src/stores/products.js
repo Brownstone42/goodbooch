@@ -25,6 +25,17 @@ export const useProductsStore = defineStore('products', {
                         if (coverPath) {
                             data.coverImageUrl = await getDownloadURL(storageRef(storage, coverPath))
                         }
+                        if (data.detailImagePaths && data.detailImagePaths.length > 0) {
+                            const urls = await Promise.all(
+                                data.detailImagePaths.map(async (p) => {
+                                    try { return await getDownloadURL(storageRef(storage, p)) }
+                                    catch { return null }
+                                })
+                            )
+                            data.detailImageUrls = urls.filter(Boolean)
+                        } else {
+                            data.detailImageUrls = []
+                        }
                         if (!data.variants || data.variants.length === 0) {
                             data.variants = [{ id: 'default', optionValues: [], price: data.price ?? 0, stock: 0, imagePath: null }]
                             data.optionGroups = data.optionGroups || []
@@ -50,7 +61,7 @@ export const useProductsStore = defineStore('products', {
                 this.loading = false
             }
         },
-        async createProduct({ title, description, category = '', categories = [], isActive, coverImagePath = null, optionGroups = [], variants = [] }) {
+        async createProduct({ title, description, category = '', categories = [], isActive, coverImagePath = null, detailImagePaths = [], optionGroups = [], variants = [] }) {
             const productCategories = Array.isArray(categories) ? categories : (category ? [category] : [])
             await addDoc(collection(db, 'products'), {
                 title,
@@ -59,6 +70,7 @@ export const useProductsStore = defineStore('products', {
                 categories: productCategories,
                 isActive,
                 coverImagePath,
+                detailImagePaths,
                 optionGroups,
                 variants: variants.map(({ id, optionValues, price, stock, imagePath }) => ({
                     id,
@@ -71,7 +83,7 @@ export const useProductsStore = defineStore('products', {
             })
             await this.getProducts()
         },
-        async updateProduct(id, { title, description, category = '', categories = [], isActive, coverImagePath, optionGroups = [], variants = [] }) {
+        async updateProduct(id, { title, description, category = '', categories = [], isActive, coverImagePath, detailImagePaths = [], optionGroups = [], variants = [] }) {
             const productCategories = Array.isArray(categories) ? categories : (category ? [category] : [])
             await updateDoc(doc(db, 'products', id), {
                 title,
@@ -80,6 +92,7 @@ export const useProductsStore = defineStore('products', {
                 categories: productCategories,
                 isActive,
                 coverImagePath: coverImagePath || null,
+                detailImagePaths,
                 optionGroups,
                 variants: variants.map(({ id: vid, optionValues, price, stock, imagePath }) => ({
                     id: vid,

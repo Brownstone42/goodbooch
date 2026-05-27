@@ -92,6 +92,46 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Detail Images -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-semibold text-slate-700">Detail Images</label>
+                                <span class="text-xs text-slate-400">{{ detailImages.length }} / 5</span>
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <!-- Existing / newly added thumbnails -->
+                                <div
+                                    v-for="(img, i) in detailImages"
+                                    :key="i"
+                                    class="relative w-20 h-20 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 group shrink-0"
+                                >
+                                    <img :src="img.preview" class="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        @click="removeDetailImage(i)"
+                                        class="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Add button -->
+                                <label
+                                    v-if="detailImages.length < 5"
+                                    class="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:border-brand hover:text-brand transition-colors shrink-0"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <span class="text-[10px] font-semibold">Add</span>
+                                    <input type="file" accept="image/*" @change="handleDetailImage" class="hidden" />
+                                </label>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Shown in the product detail carousel after the cover image. Max 5.</p>
+                        </div>
                     </div>
 
                     <!-- Sales Info Card -->
@@ -220,6 +260,7 @@ export default {
             loading: false,
             coverImageFile: null,
             coverImagePreview: null,
+            detailImages: [],   // [{ file, preview, path }]
             selectedCategory: '',
             batch: { price: null, stock: null },
             errors: { title: '', categories: '', variants: '', variantRows: [], optionGroups: [] },
@@ -247,6 +288,11 @@ export default {
         populateForm(product) {
             this.coverImagePreview = product.imageUrl || null
             this.coverImageFile = null
+            this.detailImages = (product.detailImagePaths || []).map((path, i) => ({
+                file: null,
+                preview: (product.detailImageUrls || [])[i] || null,
+                path,
+            }))
             this.selectedCategory = ''
             this.batch = { price: null, stock: null }
             this.form = {
@@ -280,6 +326,15 @@ export default {
                 this.coverImageFile = file
                 this.coverImagePreview = URL.createObjectURL(file)
             }
+        },
+        handleDetailImage(e) {
+            const file = e.target.files[0]
+            if (!file || this.detailImages.length >= 5) return
+            this.detailImages.push({ file, preview: URL.createObjectURL(file), path: null })
+            e.target.value = ''
+        },
+        removeDetailImage(i) {
+            this.detailImages.splice(i, 1)
         },
         handleVariantImage(e, vi) {
             const file = e.target.files[0]
@@ -415,6 +470,11 @@ export default {
                 if (this.coverImageFile) {
                     coverImagePath = await store.uploadProductImage(this.coverImageFile)
                 }
+                const detailImagePaths = await Promise.all(
+                    this.detailImages.map((img) =>
+                        img.file ? store.uploadProductImage(img.file) : Promise.resolve(img.path)
+                    )
+                )
                 const finalVariants = await Promise.all(this.form.variants.map(async (v) => {
                     let vImagePath = v.imagePath
                     if (v.imageFile) {
@@ -438,6 +498,7 @@ export default {
                     categories: this.form.categories,
                     isActive: this.form.isActive,
                     coverImagePath,
+                    detailImagePaths,
                     optionGroups,
                     variants: finalVariants
                 }
