@@ -4,6 +4,7 @@ import ProductView from '../views/ProductView.vue'
 import CartView from '../views/CartView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
 import LoginView from '../views/LoginView.vue'
+import ProfileView from '../views/ProfileView.vue'
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import AdminOrders from '../views/admin/AdminOrders.vue'
 import AdminQuotations from '../views/admin/AdminQuotations.vue'
@@ -21,7 +22,8 @@ const router = createRouter({
         { path: '/product/:id', component: ProductView },
         { path: '/cart', component: CartView },
         { path: '/checkout', component: CheckoutView },
-        { path: '/login', component: LoginView },
+        { path: '/login', redirect: '/profile' },
+        { path: '/profile', component: ProfileView },
         { path: '/admin', component: AdminDashboard },
         { path: '/admin/orders', component: AdminOrders },
         { path: '/admin/quotations', component: AdminQuotations },
