@@ -1,32 +1,54 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const { setGlobalOptions } = require('firebase-functions')
+const { onCall, HttpsError } = require('firebase-functions/v2/https')
+const { initializeApp } = require('firebase-admin/app')
+const { getFirestore } = require('firebase-admin/firestore')
+const Omise = require('omise')
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+setGlobalOptions({ maxInstances: 10, region: 'asia-southeast1' })
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+initializeApp()
+const db = getFirestore()
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+exports.addOmiseCard = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'Must be signed in')
+    }
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    const { token } = request.data
+    if (!token) {
+        throw new HttpsError('invalid-argument', 'token is required')
+    }
+
+    const omise = Omise({ secretKey: process.env.OMISE_SECRET_KEY })
+    const userId = request.auth.uid
+    const userRef = db.collection('users').doc(userId)
+    const userSnap = await userRef.get()
+    const { omiseCustomerId } = userSnap.data() || {}
+
+    let customer
+    if (omiseCustomerId) {
+        customer = await omise.customers.update(omiseCustomerId, { card: token })
+    } else {
+        customer = await omise.customers.create({ card: token })
+        await userRef.set({ omiseCustomerId: customer.id }, { merge: true })
+    }
+
+    const card = customer.cards.data[customer.cards.data.length - 1]
+
+    const cardData = {
+        omiseCardId: card.id,
+        last4: card.last_digits,
+        brand: card.brand,
+        expiryMonth: card.expiration_month,
+        expiryYear: card.expiration_year,
+        isPrimary: false,
+        createdAt: new Date(),
+    }
+
+    const cardsRef = userRef.collection('cards')
+    const existing = await cardsRef.get()
+    if (existing.empty) cardData.isPrimary = true
+
+    const cardDoc = await cardsRef.add(cardData)
+    return { id: cardDoc.id, ...cardData }
+})
