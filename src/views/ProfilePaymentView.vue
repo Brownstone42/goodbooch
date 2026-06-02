@@ -112,6 +112,15 @@
 
             <div class="flex flex-col gap-4">
                 <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1.5">ชื่อบนบัตร</label>
+                    <input
+                        v-model="form.name"
+                        type="text"
+                        placeholder="FIRSTNAME LASTNAME"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-brand transition-colors uppercase"
+                    />
+                </div>
+                <div>
                     <label class="block text-sm font-bold text-gray-800 mb-1.5">หมายเลขบัตร</label>
                     <input
                         v-model="form.cardNumberDisplay"
@@ -178,7 +187,7 @@ export default {
             showSheet: false,
             adding: false,
             sheetError: '',
-            form: { cardNumberDisplay: '', expiry: '', cvv: '' },
+            form: { cardNumberDisplay: '', name: '', expiry: '', cvv: '' },
         }
     },
     computed: {
@@ -207,7 +216,7 @@ export default {
             usePaymentStore().fetchCards(this.userId)
         },
         openSheet() {
-            this.form = { cardNumberDisplay: '', expiry: '', cvv: '' }
+            this.form = { cardNumberDisplay: '', name: '', expiry: '', cvv: '' }
             this.sheetError = ''
             this.showSheet = true
         },
@@ -226,8 +235,8 @@ export default {
         async handleAdd() {
             this.sheetError = ''
             const cardNumber = this.form.cardNumberDisplay.replace(/\s/g, '')
-            const { expiry, cvv } = this.form
-            if (!cardNumber || !expiry || !cvv) {
+            const { name, expiry, cvv } = this.form
+            if (!cardNumber || !name || !expiry || !cvv) {
                 this.sheetError = 'กรุณากรอกข้อมูลให้ครบ'
                 return
             }
@@ -249,6 +258,7 @@ export default {
                 const token = await new Promise((resolve, reject) => {
                     window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY)
                     window.Omise.createToken('card', {
+                        name: name.toUpperCase(),
                         number: cardNumber,
                         expiration_month: parseInt(mm),
                         expiration_year: 2000 + parseInt(yy),
