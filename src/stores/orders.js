@@ -76,6 +76,7 @@ export const useOrdersStore = defineStore('orders', {
                         title: item.title,
                         price: item.price,
                         quantity: item.quantity,
+                        imageUrl: item.imageUrl || null,
                     })),
                     totalPrice: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
                     status: ORDER_STATUSES.PENDING,

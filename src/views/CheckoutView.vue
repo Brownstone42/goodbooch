@@ -216,9 +216,15 @@
                 <!-- CTA -->
                 <button
                     @click="confirmPayment"
-                    :disabled="paymentMethod === 'card' && !selectedCard"
+                    :disabled="(paymentMethod === 'card' && !selectedCard) || submitting"
                     class="w-full bg-gray-800 text-white py-4 rounded-2xl text-sm font-bold disabled:opacity-40"
-                >{{ paymentMethod === 'qr' ? 'สร้าง QR Code' : 'ยืนยันการชำระเงิน' }}</button>
+                >
+                    <template v-if="submitting">กำลังบันทึก...</template>
+                    <template v-else-if="paymentMethod === 'qr' && qrGenerated">ชำระเงินสำเร็จ (Mock)</template>
+                    <template v-else-if="paymentMethod === 'qr'">สร้าง QR Code</template>
+                    <template v-else>ยืนยันการชำระเงิน</template>
+                </button>
+                <p v-if="orderError" class="mt-2 text-red-500 text-xs text-center">{{ orderError }}</p>
             </div>
         </template>
 
@@ -314,6 +320,7 @@ import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { useAddressStore } from '../stores/address'
 import { usePaymentStore } from '../stores/payment'
+import { useOrdersStore } from '../stores/orders'
 
 const QR_PATTERN = [
     1,1,1,1,1,1,1,
@@ -338,6 +345,8 @@ export default {
             selectedCardId: null,
             showCardSheet: false,
             qrPattern: QR_PATTERN,
+            submitting: false,
+            orderError: '',
         }
     },
     computed: {
@@ -418,11 +427,34 @@ export default {
             this.step = 2
         },
         confirmPayment() {
-            if (this.paymentMethod === 'qr') {
+            if (this.paymentMethod === 'qr' && !this.qrGenerated) {
                 this.qrGenerated = true
                 return
             }
-            this.step = 3
+            this.submitOrder()
+        },
+        async submitOrder() {
+            const auth = useAuthStore()
+            const cartStore = useCartStore()
+            this.submitting = true
+            this.orderError = ''
+            try {
+                await useOrdersStore().createOrder({
+                    customerName: this.selectedAddress.name,
+                    phone: this.selectedAddress.phone,
+                    address: this.fullAddress(this.selectedAddress),
+                    note: '',
+                    items: cartStore.items,
+                    userId: auth.user.id,
+                    userProvider: auth.user.provider ?? null,
+                })
+                cartStore.clearCart()
+                this.step = 3
+            } catch (e) {
+                this.orderError = e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'
+            } finally {
+                this.submitting = false
+            }
         },
     },
 }

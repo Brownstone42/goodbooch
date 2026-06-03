@@ -87,9 +87,11 @@
                                 class="w-full h-full object-cover"
                             />
                         </router-link>
-                        <!-- Favourite placeholder -->
-                        <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <button @click.prevent.stop="toggleFavorite(product.id)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-colors"
+                                :class="isFavorite(product.id) ? 'text-red-500' : 'text-gray-400'"
+                                :fill="isFavorite(product.id) ? 'currentColor' : 'none'"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
                         </button>
@@ -157,6 +159,8 @@
 <script>
 import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
+import { useFavoritesStore } from '../stores/favorites'
+import { useAuthStore } from '../stores/auth'
 import { CATEGORIES, CATEGORY_IMAGES } from '../constants/categories'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 
@@ -186,6 +190,8 @@ export default {
     },
     mounted() {
         useProductsStore().getProducts()
+        const auth = useAuthStore()
+        if (auth.isAuthenticated) useFavoritesStore().fetchFavorites(auth.user.id)
         // this.startHeroTimer()
     },
     // beforeUnmount() {
@@ -209,6 +215,14 @@ export default {
         },
     },
     methods: {
+        isFavorite(productId) {
+            return useFavoritesStore().isFavorite(productId)
+        },
+        toggleFavorite(productId) {
+            const auth = useAuthStore()
+            if (!auth.isAuthenticated) { this.$router.push('/profile'); return }
+            useFavoritesStore().toggleFavorite(auth.user.id, productId)
+        },
         categoryImage(cat) {
             return CATEGORY_IMAGES[cat] || null
         },

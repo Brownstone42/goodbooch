@@ -28,7 +28,17 @@
         </div>
 
         <!-- Section Title -->
-        <div class="px-4 mt-5">
+        <!-- Section Title -->
+        <div class="px-4 mt-4 flex items-center gap-3">
+            <button
+                @click="$router.back()"
+                class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center shrink-0"
+                aria-label="Back"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
             <h3 class="text-base font-bold text-gray-800">{{ activeCategory }}</h3>
         </div>
 
@@ -61,8 +71,11 @@
                                 class="w-full h-full object-cover"
                             />
                         </router-link>
-                        <button v-if="!isQuoteMode" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <button v-if="!isQuoteMode" @click.prevent.stop="toggleFavorite(product.id)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-colors"
+                                :class="isFavorite(product.id) ? 'text-red-500' : 'text-gray-400'"
+                                :fill="isFavorite(product.id) ? 'currentColor' : 'none'"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
                         </button>
@@ -102,6 +115,8 @@
 <script>
 import { useProductsStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
+import { useFavoritesStore } from '../stores/favorites'
+import { useAuthStore } from '../stores/auth'
 import { CATEGORIES } from '../constants/categories'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 
@@ -122,6 +137,8 @@ export default {
     },
     mounted() {
         useProductsStore().getProducts()
+        const auth = useAuthStore()
+        if (auth.isAuthenticated) useFavoritesStore().fetchFavorites(auth.user.id)
     },
     computed: {
         categories() {
@@ -131,8 +148,17 @@ export default {
             return useProductsStore().products.filter((p) => p.isActive)
         },
         products() {
-            if (this.activeCategory === 'ทั้งหมด') return this.allActiveProducts
-            return this.allActiveProducts.filter((p) => this.productCategories(p).includes(this.activeCategory))
+            let list = this.activeCategory === 'ทั้งหมด'
+                ? this.allActiveProducts
+                : this.allActiveProducts.filter((p) => this.productCategories(p).includes(this.activeCategory))
+            const q = (this.$route.query.q || '').toLowerCase().trim()
+            if (q) {
+                list = list.filter((p) =>
+                    p.title?.toLowerCase().includes(q) ||
+                    p.description?.toLowerCase().includes(q)
+                )
+            }
+            return list
         },
         loading() {
             return useProductsStore().loading
@@ -145,6 +171,14 @@ export default {
         },
     },
     methods: {
+        isFavorite(productId) {
+            return useFavoritesStore().isFavorite(productId)
+        },
+        toggleFavorite(productId) {
+            const auth = useAuthStore()
+            if (!auth.isAuthenticated) { this.$router.push('/profile'); return }
+            useFavoritesStore().toggleFavorite(auth.user.id, productId)
+        },
         productPath(id) {
             return this.isQuoteMode ? `/product/${id}?quoteMode=true` : `/product/${id}`
         },

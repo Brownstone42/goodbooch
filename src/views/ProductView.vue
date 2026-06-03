@@ -246,11 +246,15 @@ export default {
             this.$router.push('/checkout')
         },
         selectForQuote() {
+            const label = this.product.optionGroups?.length
+                ? this.product.optionGroups.map((g) => this.selectedOptions[g.name]).filter(Boolean).join(' / ')
+                : null
             useQuotationStore().setProductRef({
-                id:             this.product.id,
-                title:          this.product.title,
-                imageUrl:       this.product.imageUrl || this.product.coverImageUrl || null,
-                coverImageUrl:  this.product.coverImageUrl || null,
+                id:           this.product.id,
+                title:        this.product.title,
+                imageUrl:     this.product.imageUrl || this.product.coverImageUrl || null,
+                coverImageUrl: this.product.coverImageUrl || null,
+                variantLabel: label || null,
             })
             this.$router.push('/quote')
         },

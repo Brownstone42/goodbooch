@@ -379,6 +379,9 @@
                                                 : 'สินค้าที่ ' + (i + 1)
                                         }}
                                     </p>
+                                    <p v-if="product.refProduct?.variantLabel" class="text-xs text-gray-400 mt-0.5">
+                                        {{ product.refProduct.variantLabel }}
+                                    </p>
                                     <p
                                         class="text-sm text-gray-700 mt-0.5 leading-relaxed line-clamp-2"
                                     >
@@ -473,6 +476,7 @@
 
 <script>
 import { useQuotationStore } from '../stores/quotation'
+import { useAuthStore } from '../stores/auth'
 
 export default {
     name: 'QuoteView',
@@ -494,7 +498,8 @@ export default {
         async handleSubmit() {
             if (!this.store.isFormValid) return
             try {
-                await this.store.submitQuotation()
+                const userId = useAuthStore().user?.id ?? null
+                await this.store.submitQuotation(userId)
             } catch {
                 // error shown via store.error
             }

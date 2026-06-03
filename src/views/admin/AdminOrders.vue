@@ -134,6 +134,7 @@ export default {
         return {
             search: '',
             filterStatus: '',
+            ORDER_STATUSES,
         }
     },
     computed: {

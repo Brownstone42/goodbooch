@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import {
-    collection, addDoc, getDocs, serverTimestamp, query, orderBy,
+    collection, addDoc, getDocs, updateDoc, doc, serverTimestamp, query, orderBy, where,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
@@ -24,6 +24,11 @@ export const useQuotationStore = defineStore('quotation', {
         quotations: [],
         loadingList: false,
         listError: null,
+
+        // ---- customer list ----
+        userQuotations: [],
+        loadingUser: false,
+        userError: null,
     }),
 
     getters: {
@@ -53,9 +58,10 @@ export const useQuotationStore = defineStore('quotation', {
         setProductRef(product) {
             if (this.selectingIndex === null) return
             this.products[this.selectingIndex].refProduct = {
-                id:       product.id,
-                title:    product.title,
-                imageUrl: product.imageUrl || product.coverImageUrl || null,
+                id:          product.id,
+                title:       product.title,
+                imageUrl:    product.imageUrl || product.coverImageUrl || null,
+                variantLabel: product.variantLabel || null,
             }
             this.selectingIndex = null
         },
@@ -64,16 +70,18 @@ export const useQuotationStore = defineStore('quotation', {
         },
 
         // --- submit ---
-        async submitQuotation() {
+        async submitQuotation(userId = null) {
             this.submitting = true
             this.error = null
             try {
                 const ref = await addDoc(collection(db, 'quotations'), {
+                    userId:    userId ?? null,
                     company: { ...this.company },
                     products: this.products.map((p) => ({
-                        refProductId:       p.refProduct?.id       ?? null,
-                        refProductName:     p.refProduct?.title    ?? null,
-                        refProductImageUrl: p.refProduct?.imageUrl ?? null,
+                        refProductId:           p.refProduct?.id           ?? null,
+                        refProductName:         p.refProduct?.title        ?? null,
+                        refProductImageUrl:     p.refProduct?.imageUrl     ?? null,
+                        refProductVariantLabel: p.refProduct?.variantLabel ?? null,
                         description:        p.description.trim(),
                         quantity:           Number(p.quantity),
                     })),
@@ -100,6 +108,36 @@ export const useQuotationStore = defineStore('quotation', {
             this.error        = null
             this.submitted    = false
             this.submittedId  = null
+        },
+
+        // --- customer ---
+        async fetchUserQuotations(userId) {
+            this.loadingUser = true
+            this.userError = null
+            try {
+                const snap = await getDocs(
+                    query(collection(db, 'quotations'), where('userId', '==', userId))
+                )
+                this.userQuotations = snap.docs
+                    .map((d) => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+            } catch (e) {
+                this.userError = 'ไม่สามารถโหลดข้อมูลได้'
+            } finally {
+                this.loadingUser = false
+            }
+        },
+
+        async updateQuotationStatus(id, status) {
+            try {
+                await updateDoc(doc(db, 'quotations', id), { status })
+                const q = this.quotations.find((q) => q.id === id)
+                if (q) q.status = status
+                const uq = this.userQuotations.find((q) => q.id === id)
+                if (uq) uq.status = status
+            } catch (e) {
+                this.listError = 'Failed to update status.'
+            }
         },
 
         // --- admin ---
