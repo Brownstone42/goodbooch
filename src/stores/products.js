@@ -23,7 +23,8 @@ export const useProductsStore = defineStore('products', {
                         const data = { id: docSnap.id, ...docSnap.data() }
                         const coverPath = data.coverImagePath || data.imagePath
                         if (coverPath) {
-                            data.coverImageUrl = await getDownloadURL(storageRef(storage, coverPath))
+                            try { data.coverImageUrl = await getDownloadURL(storageRef(storage, coverPath)) }
+                            catch { data.coverImageUrl = null }
                         }
                         if (data.detailImagePaths && data.detailImagePaths.length > 0) {
                             const urls = await Promise.all(
@@ -43,7 +44,8 @@ export const useProductsStore = defineStore('products', {
                         data.variants = await Promise.all(
                             data.variants.map(async (v) => {
                                 if (v.imagePath) {
-                                    v.imageUrl = await getDownloadURL(storageRef(storage, v.imagePath))
+                                    try { v.imageUrl = await getDownloadURL(storageRef(storage, v.imagePath)) }
+                                    catch { v.imageUrl = null }
                                 }
                                 return v
                             })
@@ -56,6 +58,7 @@ export const useProductsStore = defineStore('products', {
                     })
                 )
             } catch (e) {
+                console.error('[products] getProducts failed:', e)
                 this.error = 'Failed to load products.'
             } finally {
                 this.loading = false

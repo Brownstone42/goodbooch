@@ -18,6 +18,7 @@ import ProfileUserView from '../views/ProfileUserView.vue'
 import ProfilePaymentView from '../views/ProfilePaymentView.vue'
 import MyQuotationsView from '../views/MyQuotationsView.vue'
 import FavoritesView from '../views/FavoritesView.vue'
+import PaymentStatusView from '../views/PaymentStatusView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,7 @@ const router = createRouter({
         { path: '/profile/address/:addressId/edit', component: AddressFormView },
         { path: '/my-quotations', component: MyQuotationsView },
         { path: '/favorites', component: FavoritesView },
+        { path: '/payment', name: 'payment', component: PaymentStatusView },
     ],
 })
 

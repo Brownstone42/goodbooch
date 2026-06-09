@@ -25,7 +25,10 @@
       "PowerShell($env:PYTHONUTF8 = \"1\"; $env:PYTHONIOENCODING = \"utf-8\"; cd \"C:\\\\Users\\\\anawa\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\skill-creator\\\\unknown\\\\skills\\\\skill-creator\"; python -m scripts.package_skill ..\\\\thai-address-form 2>&1)",
       "PowerShell(Get-ChildItem *)",
       "PowerShell(cmd /c \"dir /s /b `\"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\skill-creator`\"\")",
-      "PowerShell(cmd /c \"dir /s /b `\"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\user-skills`\"\")"
+      "PowerShell(cmd /c \"dir /s /b `\"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\user-skills`\"\")",
+      "Bash(firebase deploy *)",
+      "Bash(firebase functions:secrets:set OMISE_SECRET_KEY)",
+      "Bash(firebase functions:log --only createCharge)"
     ]
   },
   "enabledPlugins": {

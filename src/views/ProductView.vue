@@ -103,25 +103,43 @@
                     <button @click="$router.back()" class="w-full mt-2 text-gray-400 text-sm py-2">ยกเลิก</button>
                 </div>
 
-                <!-- Normal mode: add to cart + buy now -->
-                <div v-else class="mt-6 flex gap-3">
-                    <button
-                        @click="addToCart"
-                        :disabled="!selectedVariant || displayStock === 0 || addedToCart"
-                        class="flex-1 border-2 py-3.5 rounded-xl text-base font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                        :class="addedToCart
-                            ? 'border-green-500 text-green-600 bg-green-50'
-                            : 'border-brand text-brand bg-white hover:bg-brand hover:text-white'"
-                    >
-                        {{ addedToCart ? '✓ Added' : 'Add to Cart' }}
-                    </button>
-                    <button
-                        @click="buyNow"
-                        :disabled="!selectedVariant || displayStock === 0"
-                        class="flex-1 bg-brand text-white py-3.5 rounded-xl text-base font-medium transition-colors hover:bg-brand-dark disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                        Buy Now
-                    </button>
+                <!-- Normal mode: quantity + add to cart + buy now -->
+                <div v-else class="mt-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-sm font-semibold text-gray-700">จำนวน</span>
+                        <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
+                            <button
+                                @click="decreaseQty"
+                                :disabled="quantity <= 1"
+                                class="w-10 h-10 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-50 transition-colors disabled:opacity-30"
+                            >−</button>
+                            <span class="w-10 text-center text-base font-semibold text-gray-800">{{ quantity }}</span>
+                            <button
+                                @click="increaseQty"
+                                :disabled="!selectedVariant || quantity >= displayStock"
+                                class="w-10 h-10 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-50 transition-colors disabled:opacity-30"
+                            >+</button>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button
+                            @click="addToCart"
+                            :disabled="!selectedVariant || displayStock === 0 || addedToCart"
+                            class="flex-1 border-2 py-3.5 rounded-xl text-base font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                            :class="addedToCart
+                                ? 'border-green-500 text-green-600 bg-green-50'
+                                : 'border-brand text-brand bg-white hover:bg-brand hover:text-white'"
+                        >
+                            {{ addedToCart ? '✓ Added' : 'Add to Cart' }}
+                        </button>
+                        <button
+                            @click="buyNow"
+                            :disabled="!selectedVariant || displayStock === 0"
+                            class="flex-1 bg-brand text-white py-3.5 rounded-xl text-base font-medium transition-colors hover:bg-brand-dark disabled:opacity-40 disabled:pointer-events-none"
+                        >
+                            Buy Now
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,6 +159,7 @@ export default {
             selectedOptions: {},
             currentImageIndex: 0,
             addedToCart: false,
+            quantity: 1,
         }
     },
     computed: {
@@ -192,6 +211,7 @@ export default {
     watch: {
         // When a variant is selected, jump the carousel to that variant's image
         selectedVariant(newVariant) {
+            this.quantity = 1
             if (!newVariant?.imageUrl) return
             const idx = this.carouselImages.indexOf(newVariant.imageUrl)
             if (idx !== -1) this.currentImageIndex = idx
@@ -234,15 +254,23 @@ export default {
                 stock: variant.stock ?? 0,
             }
         },
+        decreaseQty() {
+            if (this.quantity > 1) this.quantity--
+        },
+        increaseQty() {
+            if (this.quantity < this.displayStock) this.quantity++
+        },
         addToCart() {
             if (!this.selectedVariant) return
-            useCartStore().addItem(this.buildCartItem())
+            useCartStore().addItem(this.buildCartItem(), this.quantity)
             this.addedToCart = true
             setTimeout(() => { this.addedToCart = false }, 200)
         },
         buyNow() {
             if (!this.selectedVariant) return
-            useCartStore().addItem(this.buildCartItem())
+            const cart = useCartStore()
+            cart.clearCart()
+            cart.addItem(this.buildCartItem(), this.quantity)
             this.$router.push('/checkout')
         },
         selectForQuote() {

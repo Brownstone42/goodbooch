@@ -149,25 +149,14 @@
                     </div>
 
                     <!-- QR expanded content -->
-                    <div v-if="paymentMethod === 'qr'" class="border-t border-gray-100 px-4 py-4 flex flex-col items-center gap-4">
-                        <div v-if="!qrGenerated" class="w-full flex flex-col items-center gap-3">
-                            <div class="w-40 h-40 bg-gray-100 rounded-2xl flex items-center justify-center border border-dashed border-gray-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                                </svg>
-                            </div>
-                            <p class="text-xs text-gray-400">กดปุ่มด้านล่างเพื่อสร้าง QR Code</p>
+                    <div v-if="paymentMethod === 'qr'" class="border-t border-gray-100 px-4 py-4 flex flex-col items-center gap-3">
+                        <div class="w-40 h-40 bg-gray-50 rounded-2xl flex items-center justify-center border border-dashed border-gray-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
                         </div>
-                        <div v-else class="w-full flex flex-col items-center gap-2">
-                            <!-- Mock QR code -->
-                            <div class="w-44 h-44 bg-white rounded-2xl border-2 border-gray-200 p-3 grid grid-cols-7 gap-0.5">
-                                <div v-for="i in 49" :key="i"
-                                     class="rounded-sm"
-                                     :class="qrPattern[i - 1] ? 'bg-gray-900' : 'bg-white'"></div>
-                            </div>
-                            <p class="text-sm font-bold text-gray-900 mt-1">฿{{ total.toLocaleString() }}</p>
-                            <p class="text-xs text-green-500 font-medium">รอการสแกน</p>
-                        </div>
+                        <p class="text-xs text-gray-400">กดปุ่มด้านล่างเพื่อสร้าง QR PromptPay</p>
+                        <p class="text-sm font-bold text-gray-800">฿{{ total.toLocaleString() }}</p>
                     </div>
                 </div>
 
@@ -219,8 +208,7 @@
                     :disabled="(paymentMethod === 'card' && !selectedCard) || submitting"
                     class="w-full bg-gray-800 text-white py-4 rounded-2xl text-sm font-bold disabled:opacity-40"
                 >
-                    <template v-if="submitting">กำลังบันทึก...</template>
-                    <template v-else-if="paymentMethod === 'qr' && qrGenerated">ชำระเงินสำเร็จ (Mock)</template>
+                    <template v-if="submitting">กำลังสร้าง QR...</template>
                     <template v-else-if="paymentMethod === 'qr'">สร้าง QR Code</template>
                     <template v-else>ยืนยันการชำระเงิน</template>
                 </button>
@@ -322,16 +310,6 @@ import { useAddressStore } from '../stores/address'
 import { usePaymentStore } from '../stores/payment'
 import { useOrdersStore } from '../stores/orders'
 
-const QR_PATTERN = [
-    1,1,1,1,1,1,1,
-    1,0,0,0,0,0,1,
-    1,0,1,0,1,0,1,
-    1,0,0,1,0,0,1,
-    1,0,1,0,1,0,1,
-    1,0,0,0,0,0,1,
-    1,1,1,1,1,1,1,
-]
-
 export default {
     name: 'CheckoutView',
     data() {
@@ -341,10 +319,8 @@ export default {
             showAddressSheet: false,
             addressError: '',
             paymentMethod: 'qr',
-            qrGenerated: false,
             selectedCardId: null,
             showCardSheet: false,
-            qrPattern: QR_PATTERN,
             submitting: false,
             orderError: '',
         }
@@ -427,11 +403,65 @@ export default {
             this.step = 2
         },
         confirmPayment() {
-            if (this.paymentMethod === 'qr' && !this.qrGenerated) {
-                this.qrGenerated = true
-                return
+            if (this.paymentMethod === 'qr') {
+                this.submitQrPayment()
+            } else {
+                this.submitOrder()
             }
-            this.submitOrder()
+        },
+        createPromptPaySource() {
+            return new Promise((resolve, reject) => {
+                window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY)
+                window.Omise.createSource(
+                    'promptpay',
+                    { amount: Math.round(this.total * 100), currency: 'THB' },
+                    (statusCode, response) => {
+                        if (statusCode === 200) resolve(response)
+                        else reject(new Error(response.message || 'ไม่สามารถสร้าง QR Code ได้'))
+                    }
+                )
+            })
+        },
+        async submitQrPayment() {
+            this.submitting = true
+            this.orderError = ''
+            try {
+                const source = await this.createPromptPaySource()
+                const auth = useAuthStore()
+                const cartStore = useCartStore()
+                const data = await usePaymentStore().createQrCharge({
+                    source: source.id,
+                    items: cartStore.items.map((item) => ({
+                        key: item.key,
+                        productId: item.productId,
+                        variantId: item.variantId,
+                        variantLabel: item.variantLabel || null,
+                        title: item.title,
+                        quantity: item.quantity,
+                        imageUrl: item.imageUrl || null,
+                    })),
+                    address: {
+                        name: this.selectedAddress.name,
+                        phone: this.selectedAddress.phone,
+                        fullAddress: this.fullAddress(this.selectedAddress),
+                    },
+                    userId: auth.user.id,
+                })
+                cartStore.clearCart()
+                this.$router.push({
+                    path: '/payment',
+                    query: {
+                        orderId: data.orderId,
+                        qrImage: data.qrImage,
+                        amount: String(data.amount),
+                    },
+                })
+            } catch (e) {
+                console.error('[checkout] QR payment error:', e)
+                this.orderError = e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'
+            } finally {
+                this.submitting = false
+            }
         },
         async submitOrder() {
             const auth = useAuthStore()

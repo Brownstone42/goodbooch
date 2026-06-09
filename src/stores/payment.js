@@ -1,10 +1,14 @@
 import { defineStore } from 'pinia'
 import {
     collection, getDocs, doc,
-    updateDoc, deleteDoc, query, orderBy,
+    updateDoc, deleteDoc, query, orderBy, onSnapshot,
 } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { db, app } from '../firebase'
+
+function fns() {
+    return getFunctions(app, 'asia-southeast1')
+}
 
 function cardsRef(userId) {
     return collection(db, 'users', userId, 'cards')
@@ -19,11 +23,60 @@ export const usePaymentStore = defineStore('payment', {
         cards: [],
         loading: false,
         error: null,
+        currentOrderStatus: null,
+        currentOrderCreatedAt: null,
+        _unsubscribeOrder: null,
     }),
     getters: {
         primaryCard: (state) => state.cards.find((c) => c.isPrimary) ?? state.cards[0] ?? null,
     },
     actions: {
+        async createQrCharge({ source, items, address, userId }) {
+            this.loading = true
+            this.error = null
+            try {
+                const { data } = await httpsCallable(fns(), 'createCharge')({ source, items, address, userId })
+                return data
+            } catch (e) {
+                this.error = 'ไม่สามารถสร้างคำสั่งชำระเงินได้'
+                throw e
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async pollOrderStatus(orderId) {
+            try {
+                const { data } = await httpsCallable(fns(), 'checkPaymentStatus')({ orderId })
+                return data.status
+            } catch (e) {
+                console.error('[payment] pollOrderStatus failed:', e)
+                return null
+            }
+        },
+
+        listenToOrder(orderId) {
+            this.stopOrderListener()
+            this.currentOrderStatus = null
+            this.currentOrderCreatedAt = null
+            const docRef = doc(db, 'orders', orderId)
+            this._unsubscribeOrder = onSnapshot(docRef, (snap) => {
+                if (!snap.exists()) return
+                const data = snap.data()
+                this.currentOrderStatus = data.status
+                this.currentOrderCreatedAt = data.createdAt?.toDate?.() ?? null
+            })
+        },
+
+        stopOrderListener() {
+            if (this._unsubscribeOrder) {
+                this._unsubscribeOrder()
+                this._unsubscribeOrder = null
+            }
+            this.currentOrderStatus = null
+            this.currentOrderCreatedAt = null
+        },
+
         async fetchCards(userId) {
             this.loading = true
             this.error = null
@@ -43,7 +96,7 @@ export const usePaymentStore = defineStore('payment', {
             this.loading = true
             this.error = null
             try {
-                const fn = httpsCallable(getFunctions(app, 'asia-southeast1'), 'addOmiseCard')
+                const fn = httpsCallable(fns(), 'addOmiseCard')
                 const { data } = await fn({ token })
                 this.cards.push({ ...data })
             } catch (e) {
