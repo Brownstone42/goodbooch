@@ -51,7 +51,9 @@
       "Bash(python3 -c ' *)",
       "Bash(node -e \"const d = require\\('./src/constants/thaiAddressData.json'\\); console.log\\('provinces sample:', JSON.stringify\\(d.provinces.slice\\(0,2\\)\\)\\); console.log\\('districts sample:', JSON.stringify\\(d.districts.slice\\(0,2\\)\\)\\); console.log\\('subdistricts sample:', JSON.stringify\\(d.subdistricts.slice\\(0,2\\)\\)\\); console.log\\('counts:', d.provinces.length, d.districts.length, d.subdistricts.length\\)\")",
       "Bash(node *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Read(//c/Users/anawa/.claude/skills/**)",
+      "Read(//c/Users/anawa/.claude/**)"
     ]
   },
   "enabledPlugins": {
