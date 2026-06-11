@@ -61,6 +61,35 @@
                             <p class="text-xs text-slate-400 mt-2">Use Add for each category. Leave empty if this product has no category.</p>
                         </div>
 
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Weight (grams)</label>
+                            <div class="flex items-center gap-2">
+                                <input v-model.number="form.weight" type="number" min="0" placeholder="e.g. 500" class="w-40 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all" />
+                                <span class="text-sm text-slate-500">g</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Dimensions (cm)</label>
+                            <div class="flex items-center gap-2">
+                                <div class="flex flex-col items-center gap-1">
+                                    <input v-model.number="form.dimensionLength" type="number" min="0" placeholder="0" class="w-24 px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm text-center focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all" />
+                                    <span class="text-xs text-slate-400">Length</span>
+                                </div>
+                                <span class="text-slate-400 mb-4">×</span>
+                                <div class="flex flex-col items-center gap-1">
+                                    <input v-model.number="form.dimensionWidth" type="number" min="0" placeholder="0" class="w-24 px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm text-center focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all" />
+                                    <span class="text-xs text-slate-400">Width</span>
+                                </div>
+                                <span class="text-slate-400 mb-4">×</span>
+                                <div class="flex flex-col items-center gap-1">
+                                    <input v-model.number="form.dimensionHeight" type="number" min="0" placeholder="0" class="w-24 px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm text-center focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all" />
+                                    <span class="text-xs text-slate-400">Height</span>
+                                </div>
+                                <span class="text-sm text-slate-500 mb-4">cm</span>
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-3 pt-2">
                             <button type="button" @click="form.isActive = !form.isActive" :class="['relative w-12 h-6 rounded-full transition-colors focus:outline-none', form.isActive ? 'bg-brand' : 'bg-slate-300']">
                                 <span :class="['absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform', form.isActive ? 'translate-x-6' : 'translate-x-0']"></span>
@@ -269,6 +298,10 @@ export default {
                 description: '',
                 categories: [],
                 isActive: true,
+                weight: null,
+                dimensionLength: null,
+                dimensionWidth: null,
+                dimensionHeight: null,
                 optionGroups: [],
                 variants: [{ id: 'default', optionValues: [], price: null, stock: 0, imageFile: null, imagePreview: null, imagePath: null, imageUrl: null }],
             },
@@ -300,6 +333,10 @@ export default {
                 description: product.description || '',
                 categories: Array.isArray(product.categories) ? [...product.categories] : (product.category ? [product.category] : []),
                 isActive: product.isActive ?? true,
+                weight: product.weight ?? null,
+                dimensionLength: product.dimensionLength ?? null,
+                dimensionWidth: product.dimensionWidth ?? null,
+                dimensionHeight: product.dimensionHeight ?? null,
                 optionGroups: (product.optionGroups || []).map(g => ({
                     name: g.name,
                     options: [...g.options],
@@ -497,6 +534,10 @@ export default {
                     description: this.form.description,
                     categories: this.form.categories,
                     isActive: this.form.isActive,
+                    weight: this.form.weight || null,
+                    dimensionLength: this.form.dimensionLength || null,
+                    dimensionWidth: this.form.dimensionWidth || null,
+                    dimensionHeight: this.form.dimensionHeight || null,
                     coverImagePath,
                     detailImagePaths,
                     optionGroups,

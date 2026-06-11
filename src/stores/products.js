@@ -64,7 +64,7 @@ export const useProductsStore = defineStore('products', {
                 this.loading = false
             }
         },
-        async createProduct({ title, description, category = '', categories = [], isActive, coverImagePath = null, detailImagePaths = [], optionGroups = [], variants = [] }) {
+        async createProduct({ title, description, category = '', categories = [], isActive, weight = null, dimensionLength = null, dimensionWidth = null, dimensionHeight = null, coverImagePath = null, detailImagePaths = [], optionGroups = [], variants = [] }) {
             const productCategories = Array.isArray(categories) ? categories : (category ? [category] : [])
             await addDoc(collection(db, 'products'), {
                 title,
@@ -72,6 +72,10 @@ export const useProductsStore = defineStore('products', {
                 category: productCategories[0] || '',
                 categories: productCategories,
                 isActive,
+                weight,
+                dimensionLength,
+                dimensionWidth,
+                dimensionHeight,
                 coverImagePath,
                 detailImagePaths,
                 optionGroups,
@@ -86,7 +90,7 @@ export const useProductsStore = defineStore('products', {
             })
             await this.getProducts()
         },
-        async updateProduct(id, { title, description, category = '', categories = [], isActive, coverImagePath, detailImagePaths = [], optionGroups = [], variants = [] }) {
+        async updateProduct(id, { title, description, category = '', categories = [], isActive, weight = null, dimensionLength = null, dimensionWidth = null, dimensionHeight = null, coverImagePath, detailImagePaths = [], optionGroups = [], variants = [] }) {
             const productCategories = Array.isArray(categories) ? categories : (category ? [category] : [])
             await updateDoc(doc(db, 'products', id), {
                 title,
@@ -94,6 +98,10 @@ export const useProductsStore = defineStore('products', {
                 category: productCategories[0] || '',
                 categories: productCategories,
                 isActive,
+                weight,
+                dimensionLength,
+                dimensionWidth,
+                dimensionHeight,
                 coverImagePath: coverImagePath || null,
                 detailImagePaths,
                 optionGroups,

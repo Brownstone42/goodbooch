@@ -109,15 +109,26 @@
 
             <!-- Total + CTA -->
             <div class="px-4">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 mb-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 mb-4 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-500">สินค้ารวม</span>
-                        <span class="text-base font-bold text-gray-900">฿{{ total.toLocaleString() }}</span>
+                        <span class="text-sm text-gray-900">฿{{ total.toLocaleString() }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">ค่าจัดส่ง</span>
+                        <span v-if="shippingLoading" class="text-sm text-gray-400">กำลังคำนวณ...</span>
+                        <span v-else-if="shippingError" class="text-xs text-red-400">{{ shippingError }}</span>
+                        <span v-else-if="shippingCost !== null" class="text-sm text-gray-900">฿{{ shippingCost.toLocaleString() }}</span>
+                        <span v-else class="text-sm text-gray-400">—</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <span class="text-base font-bold text-gray-900">รวมทั้งหมด</span>
+                        <span class="text-base font-bold text-gray-900">฿{{ grandTotal.toLocaleString() }}</span>
                     </div>
                 </div>
                 <button
                     @click="goToPayment"
-                    :disabled="items.length === 0"
+                    :disabled="items.length === 0 || shippingLoading"
                     class="w-full bg-gray-800 text-white py-4 rounded-2xl text-sm font-bold disabled:opacity-40"
                 >เลือกวิธีชำระเงิน</button>
             </div>
@@ -156,7 +167,7 @@
                             </svg>
                         </div>
                         <p class="text-xs text-gray-400">กดปุ่มด้านล่างเพื่อสร้าง QR PromptPay</p>
-                        <p class="text-sm font-bold text-gray-800">฿{{ total.toLocaleString() }}</p>
+                        <p class="text-sm font-bold text-gray-800">฿{{ grandTotal.toLocaleString() }}</p>
                     </div>
                 </div>
 
@@ -309,6 +320,8 @@ import { useAuthStore } from '../stores/auth'
 import { useAddressStore } from '../stores/address'
 import { usePaymentStore } from '../stores/payment'
 import { useOrdersStore } from '../stores/orders'
+import { useProductsStore } from '../stores/products'
+import { SHOP_AREA_CODE, getFlashAreaCode } from '../constants/flashAreaCodes'
 
 export default {
     name: 'CheckoutView',
@@ -318,6 +331,9 @@ export default {
             selectedAddressId: null,
             showAddressSheet: false,
             addressError: '',
+            shippingCost: null,
+            shippingLoading: false,
+            shippingError: '',
             paymentMethod: 'qr',
             selectedCardId: null,
             showCardSheet: false,
@@ -336,6 +352,15 @@ export default {
         selectedCard() {
             return this.cards.find((c) => c.id === this.selectedCardId) ?? null
         },
+        grandTotal() {
+            return this.total + (this.shippingCost ?? 0)
+        },
+    },
+    watch: {
+        items: {
+            deep: true,
+            handler() { this.fetchShippingCost() },
+        },
     },
     mounted() {
         const auth = useAuthStore()
@@ -346,7 +371,10 @@ export default {
         const addressStore = useAddressStore()
         const initAddress = () => {
             const primary = addressStore.primaryAddress
-            if (primary) this.selectedAddressId = primary.id
+            if (primary) {
+                this.selectedAddressId = primary.id
+                this.fetchShippingCost()
+            }
         }
         if (addressStore.addresses.length > 0) {
             initAddress()
@@ -381,6 +409,7 @@ export default {
         selectAddress(id) {
             this.selectedAddressId = id
             this.showAddressSheet = false
+            this.fetchShippingCost()
         },
         openCardSheet() {
             this.showCardSheet = true
@@ -391,6 +420,55 @@ export default {
         selectCard(id) {
             this.selectedCardId = id
             this.showCardSheet = false
+        },
+        async fetchShippingCost() {
+            if (!this.selectedAddress || this.items.length === 0) return
+            const addr = this.selectedAddress
+            const dstArea = getFlashAreaCode(addr.subdistrict, addr.postalCode)
+            if (!dstArea) {
+                this.shippingCost = null
+                this.shippingError = 'ไม่พบรหัสพื้นที่'
+                return
+            }
+            const productsStore = useProductsStore()
+            let totalWeightKg = 0
+            let maxL = 0, maxW = 0, totalH = 0
+            for (const item of this.items) {
+                const product = productsStore.getById(item.productId)
+                const w = product?.weight || 0
+                const l = product?.dimensionLength || 0
+                const ww = product?.dimensionWidth || 0
+                const h = product?.dimensionHeight || 0
+                totalWeightKg += (w * item.quantity) / 1000
+                for (let i = 0; i < item.quantity; i++) {
+                    maxL = Math.max(maxL, l)
+                    maxW = Math.max(maxW, ww)
+                    totalH += h
+                }
+            }
+            const weight = Math.max(totalWeightKg, 0.01)
+            const length = Math.max(maxL, 1)
+            const width = Math.max(maxW, 1)
+            const height = Math.max(totalH, 1)
+            this.shippingLoading = true
+            this.shippingError = ''
+            try {
+                const url = `https://www.flashexpress.co.th/webApi/tools/freightCharge?express_category=1&weight=${weight}&length=${length}&width=${width}&height=${height}&src_area=${SHOP_AREA_CODE}&dst_area=${dstArea}`
+                const res = await fetch(url)
+                const json = await res.json()
+                if (json.code === 1 && json.data?.[0]?.paid_by_sender) {
+                    const s = json.data[0].paid_by_sender
+                    this.shippingCost = (s.parcel_amount + s.fuel_surcharge_amount) / 100
+                } else {
+                    this.shippingCost = null
+                    this.shippingError = 'ไม่สามารถคำนวณค่าจัดส่งได้'
+                }
+            } catch {
+                this.shippingCost = null
+                this.shippingError = 'ไม่สามารถคำนวณค่าจัดส่งได้'
+            } finally {
+                this.shippingLoading = false
+            }
         },
         goToPayment() {
             if (!this.selectedAddress) {
@@ -414,7 +492,7 @@ export default {
                 window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY)
                 window.Omise.createSource(
                     'promptpay',
-                    { amount: Math.round(this.total * 100), currency: 'THB' },
+                    { amount: Math.round(this.grandTotal * 100), currency: 'THB' },
                     (statusCode, response) => {
                         if (statusCode === 200) resolve(response)
                         else reject(new Error(response.message || 'ไม่สามารถสร้าง QR Code ได้'))
