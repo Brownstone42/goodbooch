@@ -53,7 +53,10 @@
       "Bash(node *)",
       "Bash(npx vite *)",
       "Read(//c/Users/anawa/.claude/skills/**)",
-      "Read(//c/Users/anawa/.claude/**)"
+      "Read(//c/Users/anawa/.claude/**)",
+      "Bash(npm run *)",
+      "Bash(netlify deploy *)",
+      "Bash(firebase functions:log --only omiseWebhook)"
     ]
   },
   "enabledPlugins": {

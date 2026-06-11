@@ -61,7 +61,7 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
     const OMISE_SECRET_KEY = process.env.OMISE_SECRET_KEY
     if (!OMISE_SECRET_KEY) throw new HttpsError('failed-precondition', 'OMISE_SECRET_KEY not set.')
 
-    const { source, items, address, userId } = request.data
+    const { source, items, address, shippingCost, userId } = request.data
     if (!source) throw new HttpsError('invalid-argument', 'source is required')
     if (!items?.length) throw new HttpsError('invalid-argument', 'items is required')
 
@@ -89,9 +89,12 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
             })
         }
 
+        const shippingTHB = typeof shippingCost === 'number' && shippingCost > 0 ? shippingCost : 0
+        const grandTotalTHB = totalTHB + shippingTHB
+
         const omise = Omise({ secretKey: OMISE_SECRET_KEY })
         const charge = await omise.charges.create({
-            amount: Math.round(totalTHB * 100),
+            amount: Math.round(grandTotalTHB * 100),
             currency: 'thb',
             description: `Goodbooch order for ${address.name}`,
             metadata: { userId: userId || request.auth.uid },
@@ -110,7 +113,9 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
             address: address.fullAddress,
             note: '',
             items: validatedItems,
-            totalPrice: totalTHB,
+            subtotalPrice: totalTHB,
+            shippingPrice: shippingTHB,
+            totalPrice: grandTotalTHB,
             status: 'payment_pending',
             omiseChargeId: charge.id,
             paymentType: 'promptpay',
@@ -122,7 +127,7 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
             orderId: orderRef.id,
             chargeId: charge.id,
             qrImage,
-            amount: totalTHB,
+            amount: grandTotalTHB,
         }
     } catch (error) {
         console.error('createCharge error:', error)
@@ -175,15 +180,21 @@ exports.checkPaymentStatus = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (re
 
 exports.omiseWebhook = onRequest({ secrets: ['OMISE_SECRET_KEY'] }, async (req, res) => {
     const event = req.body
+    console.log('[webhook] received event key:', event.key)
+
     if (event.key !== 'charge.complete') return res.status(200).send('OK')
 
     const chargeId = event.data?.id
     if (!chargeId) return res.status(400).send('Missing charge id')
 
+    console.log('[webhook] processing charge:', chargeId)
+
     try {
         // Always re-verify with Omise — never trust the webhook payload alone
         const omise = Omise({ secretKey: process.env.OMISE_SECRET_KEY })
         const charge = await omise.charges.retrieve(chargeId)
+
+        console.log('[webhook] charge status:', charge.status)
 
         let newStatus
         if (charge.status === 'successful') newStatus = 'pending'
@@ -191,11 +202,14 @@ exports.omiseWebhook = onRequest({ secrets: ['OMISE_SECRET_KEY'] }, async (req, 
         else newStatus = 'failed'
 
         const snap = await db.collection('orders').where('omiseChargeId', '==', chargeId).limit(1).get()
-        if (!snap.empty) {
+        if (snap.empty) {
+            console.warn('[webhook] no order found for chargeId:', chargeId)
+        } else {
             await snap.docs[0].ref.update({
                 status: newStatus,
                 paidAt: charge.status === 'successful' ? FieldValue.serverTimestamp() : null,
             })
+            console.log('[webhook] order', snap.docs[0].id, 'updated to:', newStatus)
         }
     } catch (err) {
         console.error('Webhook Error:', err)

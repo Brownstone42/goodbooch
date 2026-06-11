@@ -523,6 +523,7 @@ export default {
                         phone: this.selectedAddress.phone,
                         fullAddress: this.fullAddress(this.selectedAddress),
                     },
+                    shippingCost: this.shippingCost ?? 0,
                     userId: auth.user.id,
                 })
                 cartStore.clearCart()

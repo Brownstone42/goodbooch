@@ -31,11 +31,11 @@ export const usePaymentStore = defineStore('payment', {
         primaryCard: (state) => state.cards.find((c) => c.isPrimary) ?? state.cards[0] ?? null,
     },
     actions: {
-        async createQrCharge({ source, items, address, userId }) {
+        async createQrCharge({ source, items, address, shippingCost, userId }) {
             this.loading = true
             this.error = null
             try {
-                const { data } = await httpsCallable(fns(), 'createCharge')({ source, items, address, userId })
+                const { data } = await httpsCallable(fns(), 'createCharge')({ source, items, address, shippingCost, userId })
                 return data
             } catch (e) {
                 this.error = 'ไม่สามารถสร้างคำสั่งชำระเงินได้'

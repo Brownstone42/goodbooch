@@ -35,7 +35,7 @@
                     รอการสแกน...
                 </div>
 
-                <button @click="$router.push('/')" class="text-gray-400 text-xs">ยกเลิกและกลับหน้าแรก</button>
+                <button @click="cancelOrder" class="text-gray-400 text-xs">ยกเลิกและกลับหน้าแรก</button>
             </div>
         </template>
 
@@ -72,6 +72,7 @@
 
 <script>
 import { usePaymentStore } from '../stores/payment'
+import { useOrdersStore } from '../stores/orders'
 
 const PENDING_EXPIRY_SECONDS = 15 * 60
 const POLL_INTERVAL_MS = 15_000
@@ -177,6 +178,10 @@ export default {
             if (document.visibilityState === 'visible' && (this.orderStatus === 'payment_pending' || !this.orderStatus)) {
                 usePaymentStore().pollOrderStatus(this.orderId)
             }
+        },
+        async cancelOrder() {
+            await useOrdersStore().updateOrderStatus(this.orderId, 'canceled')
+            this.$router.push('/')
         },
         async saveQR() {
             try {
