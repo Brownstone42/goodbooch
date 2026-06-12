@@ -48,7 +48,7 @@ export const usePaymentStore = defineStore('payment', {
         async pollOrderStatus(orderId) {
             try {
                 const { data } = await httpsCallable(fns(), 'checkPaymentStatus')({ orderId })
-                return data.status
+                return data.paymentStatus
             } catch (e) {
                 console.error('[payment] pollOrderStatus failed:', e)
                 return null
@@ -63,7 +63,7 @@ export const usePaymentStore = defineStore('payment', {
             this._unsubscribeOrder = onSnapshot(docRef, (snap) => {
                 if (!snap.exists()) return
                 const data = snap.data()
-                this.currentOrderStatus = data.status
+                this.currentOrderStatus = data.paymentStatus
                 this.currentOrderCreatedAt = data.createdAt?.toDate?.() ?? null
             })
         },

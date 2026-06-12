@@ -23,13 +23,23 @@
                     <p class="text-xs text-gray-500">Order ID</p>
                     <p class="text-sm font-bold text-gray-900 mt-0.5">{{ order.id }}</p>
                 </div>
-                <div class="text-right">
-                    <p class="text-xs text-gray-500 mb-1">Status</p>
+                <div class="text-right flex flex-col items-end gap-1.5">
                     <span :class="[
-                        'text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide',
-                        order.status === ORDER_STATUSES.SHIPPED ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        'text-xs font-bold px-3 py-1 rounded-lg uppercase tracking-wide',
+                        order.paymentStatus === 'success' ? 'bg-green-100 text-green-700' :
+                        order.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' :
+                        order.paymentStatus === 'expired' || order.paymentStatus === 'canceled' ? 'bg-gray-100 text-gray-500' :
+                        'bg-amber-100 text-amber-700'
                     ]">
-                        {{ order.status }}
+                        {{ order.paymentStatus === 'success' ? 'Paid' : order.paymentStatus || 'pending' }}
+                    </span>
+                    <span v-if="order.parcelStatus" :class="[
+                        'text-xs font-bold px-3 py-1 rounded-lg uppercase tracking-wide',
+                        order.parcelStatus === 'delivered' ? 'bg-emerald-100 text-emerald-700' :
+                        order.parcelStatus === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                        'bg-amber-100 text-amber-700'
+                    ]">
+                        {{ order.parcelStatus }}
                     </span>
                 </div>
             </div>
@@ -93,7 +103,6 @@
 <script>
 import { useAuthStore } from '../stores/auth'
 import { useOrdersStore } from '../stores/orders'
-import { ORDER_STATUSES } from '../constants/orderStatuses'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 export default {

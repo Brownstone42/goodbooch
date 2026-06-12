@@ -1,5 +1,13 @@
-export const ORDER_STATUSES = {
+export const PAYMENT_STATUSES = {
     PENDING: 'pending',
-    SHIPPED: 'shipped',
+    SUCCESS: 'success',
+    FAILED: 'failed',
+    EXPIRED: 'expired',
     CANCELED: 'canceled',
+}
+
+export const PARCEL_STATUSES = {
+    PROCESSING: 'processing',
+    SHIPPED: 'shipped',
+    DELIVERED: 'delivered',
 }

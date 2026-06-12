@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-white flex flex-col">
 
         <!-- QR pending -->
-        <template v-if="qrImage && (orderStatus === 'payment_pending' || !orderStatus)">
+        <template v-if="qrImage && (orderStatus === 'pending' || !orderStatus)">
             <div class="flex-1 flex flex-col items-center justify-center gap-5 px-8 py-6">
 
                 <p class="text-3xl font-extrabold text-gray-900">฿{{ Number(amount).toLocaleString() }}</p>
@@ -40,7 +40,7 @@
         </template>
 
         <!-- Success -->
-        <div v-else-if="orderStatus === 'pending'" class="flex-1 flex flex-col items-center justify-center text-center px-8 gap-4">
+        <div v-else-if="orderStatus === 'success'" class="flex-1 flex flex-col items-center justify-center text-center px-8 gap-4">
             <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -117,7 +117,7 @@ export default {
     },
     watch: {
         orderStatus(newStatus) {
-            if (['pending', 'failed', 'expired'].includes(newStatus)) {
+            if (['success', 'failed', 'expired'].includes(newStatus)) {
                 this.cleanup()
             }
         },
@@ -163,7 +163,7 @@ export default {
         startPolling() {
             if (this.pollInterval) return
             this.pollInterval = setInterval(() => {
-                if (this.orderStatus === 'payment_pending' || !this.orderStatus) {
+                if (this.orderStatus === 'pending' || !this.orderStatus) {
                     usePaymentStore().pollOrderStatus(this.orderId)
                 } else {
                     this.stopPolling()
@@ -175,12 +175,12 @@ export default {
             this.pollInterval = null
         },
         handleVisibilityChange() {
-            if (document.visibilityState === 'visible' && (this.orderStatus === 'payment_pending' || !this.orderStatus)) {
+            if (document.visibilityState === 'visible' && (this.orderStatus === 'pending' || !this.orderStatus)) {
                 usePaymentStore().pollOrderStatus(this.orderId)
             }
         },
         async cancelOrder() {
-            await useOrdersStore().updateOrderStatus(this.orderId, 'canceled')
+            await useOrdersStore().updatePaymentStatus(this.orderId, 'canceled')
             this.$router.push('/')
         },
         async saveQR() {

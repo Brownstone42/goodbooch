@@ -116,7 +116,8 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
             subtotalPrice: totalTHB,
             shippingPrice: shippingTHB,
             totalPrice: grandTotalTHB,
-            status: 'payment_pending',
+            paymentStatus: 'pending',
+            parcelStatus: null,
             omiseChargeId: charge.id,
             paymentType: 'promptpay',
             qrImage: qrImage || null,
@@ -149,25 +150,27 @@ exports.checkPaymentStatus = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (re
         const order = orderSnap.data()
 
         // Already in a final state — skip Omise API call
-        if (order.status !== 'payment_pending') return { status: order.status }
+        if (order.paymentStatus !== 'pending') return { paymentStatus: order.paymentStatus }
 
         const omise = Omise({ secretKey: OMISE_SECRET_KEY })
         const charge = await omise.charges.retrieve(order.omiseChargeId)
 
-        let newStatus = 'payment_pending'
-        if (charge.status === 'successful') newStatus = 'pending'
+        let newPaymentStatus = null
+        if (charge.status === 'successful') newPaymentStatus = 'success'
         else if (charge.status === 'failed') {
-            newStatus = charge.failure_code === 'expired_charge' ? 'expired' : 'failed'
-        } else if (charge.status === 'expired') newStatus = 'expired'
+            newPaymentStatus = charge.failure_code === 'expired_charge' ? 'expired' : 'failed'
+        } else if (charge.status === 'expired') newPaymentStatus = 'expired'
 
-        if (newStatus !== 'payment_pending') {
-            await orderSnap.ref.update({
-                status: newStatus,
-                paidAt: newStatus === 'pending' ? FieldValue.serverTimestamp() : null,
-            })
+        if (newPaymentStatus) {
+            const updateData = {
+                paymentStatus: newPaymentStatus,
+                paidAt: newPaymentStatus === 'success' ? FieldValue.serverTimestamp() : null,
+            }
+            if (newPaymentStatus === 'success') updateData.parcelStatus = 'processing'
+            await orderSnap.ref.update(updateData)
         }
 
-        return { status: newStatus }
+        return { paymentStatus: newPaymentStatus || order.paymentStatus }
     } catch (error) {
         console.error('checkPaymentStatus error:', error)
         if (error instanceof HttpsError) throw error
@@ -196,20 +199,22 @@ exports.omiseWebhook = onRequest({ secrets: ['OMISE_SECRET_KEY'] }, async (req, 
 
         console.log('[webhook] charge status:', charge.status)
 
-        let newStatus
-        if (charge.status === 'successful') newStatus = 'pending'
-        else if (charge.status === 'failed' && charge.failure_code === 'expired_charge') newStatus = 'expired'
-        else newStatus = 'failed'
+        let newPaymentStatus
+        if (charge.status === 'successful') newPaymentStatus = 'success'
+        else if (charge.status === 'failed' && charge.failure_code === 'expired_charge') newPaymentStatus = 'expired'
+        else newPaymentStatus = 'failed'
 
         const snap = await db.collection('orders').where('omiseChargeId', '==', chargeId).limit(1).get()
         if (snap.empty) {
             console.warn('[webhook] no order found for chargeId:', chargeId)
         } else {
-            await snap.docs[0].ref.update({
-                status: newStatus,
+            const updateData = {
+                paymentStatus: newPaymentStatus,
                 paidAt: charge.status === 'successful' ? FieldValue.serverTimestamp() : null,
-            })
-            console.log('[webhook] order', snap.docs[0].id, 'updated to:', newStatus)
+            }
+            if (newPaymentStatus === 'success') updateData.parcelStatus = 'processing'
+            await snap.docs[0].ref.update(updateData)
+            console.log('[webhook] order', snap.docs[0].id, 'updated to:', newPaymentStatus)
         }
     } catch (err) {
         console.error('Webhook Error:', err)

@@ -85,17 +85,33 @@
                                 <span class="font-bold text-slate-900">฿{{ order.totalPrice.toFixed(2) }}</span>
                             </td>
                             <td class="px-8 py-5">
-                                <select
-                                    :value="order.status"
-                                    @change="updateStatus(order.id, $event.target.value)"
-                                    :class="[
-                                        'text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-brand focus:outline-none',
-                                        order.status === ORDER_STATUSES.SHIPPED ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                                    ]"
-                                >
-                                    <option :value="ORDER_STATUSES.PENDING">Pending</option>
-                                    <option :value="ORDER_STATUSES.SHIPPED">Shipped</option>
-                                </select>
+                                <div class="flex flex-col gap-2">
+                                    <span :class="[
+                                        'text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit',
+                                        order.paymentStatus === PAYMENT_STATUSES.SUCCESS ? 'bg-green-100 text-green-700' :
+                                        order.paymentStatus === PAYMENT_STATUSES.FAILED ? 'bg-red-100 text-red-700' :
+                                        order.paymentStatus === PAYMENT_STATUSES.EXPIRED ? 'bg-gray-100 text-gray-500' :
+                                        order.paymentStatus === PAYMENT_STATUSES.CANCELED ? 'bg-gray-100 text-gray-500' :
+                                        'bg-amber-100 text-amber-700'
+                                    ]">
+                                        {{ order.paymentStatus === PAYMENT_STATUSES.SUCCESS ? 'Paid' : order.paymentStatus || 'pending' }}
+                                    </span>
+                                    <select
+                                        v-if="order.paymentStatus === PAYMENT_STATUSES.SUCCESS"
+                                        :value="order.parcelStatus"
+                                        @change="updateStatus(order.id, $event.target.value)"
+                                        :class="[
+                                            'text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-brand focus:outline-none',
+                                            order.parcelStatus === PARCEL_STATUSES.SHIPPED ? 'bg-blue-100 text-blue-700' :
+                                            order.parcelStatus === PARCEL_STATUSES.DELIVERED ? 'bg-emerald-100 text-emerald-700' :
+                                            'bg-amber-100 text-amber-700'
+                                        ]"
+                                    >
+                                        <option :value="PARCEL_STATUSES.PROCESSING">Processing</option>
+                                        <option :value="PARCEL_STATUSES.SHIPPED">Shipped</option>
+                                        <option :value="PARCEL_STATUSES.DELIVERED">Delivered</option>
+                                    </select>
+                                </div>
                             </td>
                             <td class="px-8 py-5">
                                 <span class="text-sm text-slate-500">{{ formatDate(order.createdAt) }}</span>
@@ -122,7 +138,7 @@ import AdminLayout from '../../components/admin/AdminLayout.vue'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import { formatDate } from '../../utils/formatDate'
 import { useOrdersStore } from '../../stores/orders'
-import { ORDER_STATUSES } from '../../constants/orderStatuses'
+import { PAYMENT_STATUSES, PARCEL_STATUSES } from '../../constants/orderStatuses'
 
 export default {
     name: 'AdminOrders',
@@ -134,21 +150,23 @@ export default {
         return {
             search: '',
             filterStatus: '',
-            ORDER_STATUSES,
+            PAYMENT_STATUSES,
+            PARCEL_STATUSES,
         }
     },
     computed: {
         statusOptions() {
             return [
                 { value: '', label: 'All' },
-                { value: ORDER_STATUSES.PENDING, label: 'Pending' },
-                { value: ORDER_STATUSES.SHIPPED, label: 'Shipped' },
+                { value: PARCEL_STATUSES.PROCESSING, label: 'Processing' },
+                { value: PARCEL_STATUSES.SHIPPED, label: 'Shipped' },
+                { value: PARCEL_STATUSES.DELIVERED, label: 'Delivered' },
             ]
         },
         orders() {
             let all = useOrdersStore().orders
             if (this.filterStatus) {
-                all = all.filter((o) => o.status === this.filterStatus)
+                all = all.filter((o) => o.parcelStatus === this.filterStatus)
             }
             if (!this.search.trim()) return all
             const q = this.search.toLowerCase()
@@ -172,8 +190,8 @@ export default {
         reload() {
             useOrdersStore().getOrders()
         },
-        updateStatus(orderId, status) {
-            useOrdersStore().updateOrderStatus(orderId, status)
+        updateStatus(orderId, parcelStatus) {
+            useOrdersStore().updateParcelStatus(orderId, parcelStatus)
         },
         formatDate,
     },

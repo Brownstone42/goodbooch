@@ -2,13 +2,14 @@ import { defineStore } from 'pinia'
 import { collection, addDoc, getDocs, getDoc, doc, updateDoc, serverTimestamp, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useProductsStore } from './products'
-import { ORDER_STATUSES } from '../constants/orderStatuses'
+import { PAYMENT_STATUSES, PARCEL_STATUSES } from '../constants/orderStatuses'
 
 function normalizeOrder(raw) {
     return {
         id: raw.id,
         date: raw.createdAt?.toDate?.() ?? null,
-        status: raw.status,
+        paymentStatus: raw.paymentStatus ?? null,
+        parcelStatus: raw.parcelStatus ?? null,
         totalPrice: raw.totalPrice,
         userId: raw.userId,
         customer: {
@@ -79,7 +80,8 @@ export const useOrdersStore = defineStore('orders', {
                         imageUrl: item.imageUrl || null,
                     })),
                     totalPrice: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-                    status: ORDER_STATUSES.PENDING,
+                    paymentStatus: PAYMENT_STATUSES.SUCCESS,
+                    parcelStatus: PARCEL_STATUSES.PROCESSING,
                     createdAt: serverTimestamp(),
                 })
                 await Promise.all(
@@ -94,15 +96,28 @@ export const useOrdersStore = defineStore('orders', {
                 this.loading = false
             }
         },
-        async updateOrderStatus(orderId, status) {
+        async updatePaymentStatus(orderId, paymentStatus) {
             this.loading = true
             this.error = null
             try {
-                await updateDoc(doc(db, 'orders', orderId), { status })
+                await updateDoc(doc(db, 'orders', orderId), { paymentStatus })
                 const order = this.orders.find((o) => o.id === orderId)
-                if (order) order.status = status
+                if (order) order.paymentStatus = paymentStatus
             } catch (e) {
-                this.error = 'Failed to update order status.'
+                this.error = 'Failed to update payment status.'
+            } finally {
+                this.loading = false
+            }
+        },
+        async updateParcelStatus(orderId, parcelStatus) {
+            this.loading = true
+            this.error = null
+            try {
+                await updateDoc(doc(db, 'orders', orderId), { parcelStatus })
+                const order = this.orders.find((o) => o.id === orderId)
+                if (order) order.parcelStatus = parcelStatus
+            } catch (e) {
+                this.error = 'Failed to update parcel status.'
             } finally {
                 this.loading = false
             }
