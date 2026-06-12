@@ -194,7 +194,7 @@
                     <div v-if="paymentMethod === 'card'" class="border-t border-gray-100 px-4 py-3">
                         <div v-if="selectedCard"
                              @click.stop="openCardSheet"
-                             class="flex items-center gap-3 cursor-pointer">
+                             class="flex items-center gap-3 cursor-pointer mb-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
@@ -206,9 +206,24 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
                         </div>
-                        <div v-else class="flex flex-col items-center gap-2 py-2">
+                        <div v-else class="flex flex-col items-center gap-2 py-2 mb-3">
                             <p class="text-sm text-gray-400">ยังไม่มีบัตรที่บันทึกไว้</p>
                             <router-link to="/profile/payment" class="text-sm text-brand font-semibold">+ เพิ่มบัตร</router-link>
+                        </div>
+                        <!-- Surcharge breakdown -->
+                        <div class="bg-amber-50 rounded-xl px-3 py-2.5 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">ยอดสินค้า + ค่าจัดส่ง</span>
+                                <span class="text-xs text-gray-700">฿{{ grandTotal.toLocaleString() }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-amber-700 font-medium">ค่าธรรมเนียมบัตร (3%)</span>
+                                <span class="text-xs text-amber-700 font-medium">+฿{{ cardSurcharge.toFixed(2) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-1 border-t border-amber-100">
+                                <span class="text-sm font-bold text-gray-900">รวมทั้งหมด</span>
+                                <span class="text-sm font-bold text-gray-900">฿{{ cardTotal.toLocaleString() }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -219,9 +234,9 @@
                     :disabled="(paymentMethod === 'card' && !selectedCard) || submitting"
                     class="w-full bg-gray-800 text-white py-4 rounded-2xl text-sm font-bold disabled:opacity-40"
                 >
-                    <template v-if="submitting">กำลังสร้าง QR...</template>
+                    <template v-if="submitting">กำลังดำเนินการ...</template>
                     <template v-else-if="paymentMethod === 'qr'">สร้าง QR Code</template>
-                    <template v-else>ยืนยันการชำระเงิน</template>
+                    <template v-else>ยืนยัน ฿{{ cardTotal.toLocaleString() }}</template>
                 </button>
                 <p v-if="orderError" class="mt-2 text-red-500 text-xs text-center">{{ orderError }}</p>
             </div>
@@ -319,7 +334,6 @@ import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { useAddressStore } from '../stores/address'
 import { usePaymentStore } from '../stores/payment'
-import { useOrdersStore } from '../stores/orders'
 import { useProductsStore } from '../stores/products'
 import { SHOP_AREA_CODE, getFlashAreaCode } from '../constants/flashAreaCodes'
 
@@ -354,6 +368,13 @@ export default {
         },
         grandTotal() {
             return this.total + (this.shippingCost ?? 0)
+        },
+        cardSurcharge() {
+            if (this.paymentMethod !== 'card') return 0
+            return Math.round(this.grandTotal * 0.03 * 100) / 100
+        },
+        cardTotal() {
+            return this.grandTotal + this.cardSurcharge
         },
     },
     watch: {
@@ -484,7 +505,7 @@ export default {
             if (this.paymentMethod === 'qr') {
                 this.submitQrPayment()
             } else {
-                this.submitOrder()
+                this.submitCardPayment()
             }
         },
         createPromptPaySource() {
@@ -542,24 +563,43 @@ export default {
                 this.submitting = false
             }
         },
-        async submitOrder() {
-            const auth = useAuthStore()
-            const cartStore = useCartStore()
+        async submitCardPayment() {
             this.submitting = true
             this.orderError = ''
             try {
-                await useOrdersStore().createOrder({
-                    customerName: this.selectedAddress.name,
-                    phone: this.selectedAddress.phone,
-                    address: this.fullAddress(this.selectedAddress),
-                    note: '',
-                    items: cartStore.items,
+                const auth = useAuthStore()
+                const cartStore = useCartStore()
+                const data = await usePaymentStore().createCardCharge({
+                    cardId: this.selectedCardId,
+                    items: cartStore.items.map((item) => ({
+                        key: item.key,
+                        productId: item.productId,
+                        variantId: item.variantId,
+                        variantLabel: item.variantLabel || null,
+                        title: item.title,
+                        quantity: item.quantity,
+                        imageUrl: item.imageUrl || null,
+                    })),
+                    address: {
+                        name: this.selectedAddress.name,
+                        phone: this.selectedAddress.phone,
+                        fullAddress: this.fullAddress(this.selectedAddress),
+                    },
+                    shippingCost: this.shippingCost ?? 0,
                     userId: auth.user.id,
-                    userProvider: auth.user.provider ?? null,
+                    returnUri: window.location.origin + '/payment',
                 })
                 cartStore.clearCart()
-                this.step = 3
+                if (data.authorizeUri) {
+                    window.location.href = data.authorizeUri
+                } else {
+                    this.$router.push({
+                        path: '/payment',
+                        query: { orderId: data.orderId, amount: String(data.amount) },
+                    })
+                }
             } catch (e) {
+                console.error('[checkout] card payment error:', e)
                 this.orderError = e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'
             } finally {
                 this.submitting = false

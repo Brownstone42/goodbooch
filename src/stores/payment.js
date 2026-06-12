@@ -45,6 +45,20 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
+        async createCardCharge({ cardId, items, address, shippingCost, userId, returnUri }) {
+            this.loading = true
+            this.error = null
+            try {
+                const { data } = await httpsCallable(fns(), 'createCharge')({ cardId, items, address, shippingCost, userId, returnUri })
+                return data
+            } catch (e) {
+                this.error = 'ไม่สามารถสร้างคำสั่งชำระเงินได้'
+                throw e
+            } finally {
+                this.loading = false
+            }
+        },
+
         async pollOrderStatus(orderId) {
             try {
                 const { data } = await httpsCallable(fns(), 'checkPaymentStatus')({ orderId })

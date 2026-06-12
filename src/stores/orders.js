@@ -11,6 +11,7 @@ function normalizeOrder(raw) {
         paymentStatus: raw.paymentStatus ?? null,
         parcelStatus: raw.parcelStatus ?? null,
         totalPrice: raw.totalPrice,
+        qrImage: raw.qrImage ?? null,
         userId: raw.userId,
         customer: {
             name: raw.customerName,

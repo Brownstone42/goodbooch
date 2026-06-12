@@ -1,8 +1,17 @@
 <template>
     <div class="min-h-screen bg-white flex flex-col">
 
+        <!-- Card processing (no QR, pending) -->
+        <div v-if="!qrImage && (orderStatus === 'pending' || !orderStatus)" class="flex-1 flex flex-col items-center justify-center text-center px-8 gap-4">
+            <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center">
+                <div class="w-10 h-10 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin"></div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">กำลังตรวจสอบการชำระเงิน</h3>
+            <p class="text-sm text-gray-400">กรุณารอสักครู่...</p>
+        </div>
+
         <!-- QR pending -->
-        <template v-if="qrImage && (orderStatus === 'pending' || !orderStatus)">
+        <template v-else-if="!timerExpired && qrImage && (orderStatus === 'pending' || !orderStatus)">
             <div class="flex-1 flex flex-col items-center justify-center gap-5 px-8 py-6">
 
                 <p class="text-3xl font-extrabold text-gray-900">฿{{ Number(amount).toLocaleString() }}</p>
@@ -52,7 +61,7 @@
         </div>
 
         <!-- Expired -->
-        <div v-else-if="orderStatus === 'expired'" class="flex-1 flex flex-col items-center justify-center text-center px-8 gap-4">
+        <div v-else-if="timerExpired || orderStatus === 'expired'" class="flex-1 flex flex-col items-center justify-center text-center px-8 gap-4">
             <div class="text-6xl">⏳</div>
             <h3 class="text-xl font-bold text-gray-800">หมดเวลาชำระเงิน</h3>
             <p class="text-sm text-gray-400">QR Code หมดอายุแล้ว กรุณาสั่งซื้อใหม่อีกครั้ง</p>
@@ -88,6 +97,7 @@ export default {
             totalSeconds: PENDING_EXPIRY_SECONDS,
             timerInterval: null,
             pollInterval: null,
+            timerExpired: false,
         }
     },
     computed: {
@@ -122,7 +132,7 @@ export default {
             }
         },
         createdAt(newDate) {
-            if (newDate && !this.timerInterval) {
+            if (newDate && !this.timerInterval && this.qrImage) {
                 this.startTimer(newDate)
             }
         },
@@ -154,6 +164,7 @@ export default {
                 if (this.timeLeft <= 0) {
                     clearInterval(this.timerInterval)
                     this.timerInterval = null
+                    this.timerExpired = true
                     setTimeout(() => usePaymentStore().pollOrderStatus(this.orderId), 3000)
                 }
             }

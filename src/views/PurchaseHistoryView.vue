@@ -38,7 +38,7 @@
 
             <div v-else>
                 <!-- Search -->
-                <div class="relative mb-4">
+                <div class="relative mb-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
                     </svg>
@@ -48,6 +48,21 @@
                         placeholder="ค้นหา โดย เลขสั่งซื้อ หรือ ชื่อสินค้า..."
                         class="w-full bg-white border border-gray-200 rounded-full pl-10 pr-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-brand"
                     />
+                </div>
+
+                <!-- Payment status filter -->
+                <div class="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+                    <button
+                        v-for="opt in statusFilterOptions"
+                        :key="opt.value"
+                        @click="filterPaymentStatus = opt.value"
+                        :class="[
+                            'shrink-0 text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-all',
+                            filterPaymentStatus === opt.value
+                                ? 'bg-gray-800 text-white border-gray-800'
+                                : 'bg-white text-gray-500 border-gray-200'
+                        ]"
+                    >{{ opt.label }}</button>
                 </div>
 
                 <!-- Empty -->
@@ -69,10 +84,35 @@
                         :key="order.id"
                         class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                     >
-                        <!-- Card header: order ID + date -->
-                        <div class="px-4 pt-3 pb-2.5 flex justify-between items-center border-b border-gray-100">
-                            <span class="text-xs font-medium text-gray-500">คำสั่งซื้อ #{{ order.id }}</span>
-                            <span class="text-xs text-gray-400">วันที่ {{ formatDate(order.date) }}</span>
+                        <!-- Card header: order ID + date + status -->
+                        <div class="px-4 pt-3 pb-2.5 flex justify-between items-start border-b border-gray-100">
+                            <div>
+                                <span class="text-xs font-medium text-gray-500">คำสั่งซื้อ #{{ order.id }}</span>
+                                <p class="text-xs text-gray-400 mt-0.5">วันที่ {{ formatDate(order.date) }}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span :class="[
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full',
+                                    order.paymentStatus === 'success' ? 'bg-green-100 text-green-700' :
+                                    order.paymentStatus === 'failed' ? 'bg-red-100 text-red-600' :
+                                    order.paymentStatus === 'expired' || order.paymentStatus === 'canceled' ? 'bg-gray-100 text-gray-500' :
+                                    'bg-amber-100 text-amber-600'
+                                ]">
+                                    {{ order.paymentStatus === 'success' ? 'ชำระแล้ว' :
+                                       order.paymentStatus === 'failed' ? 'ไม่สำเร็จ' :
+                                       order.paymentStatus === 'expired' ? 'หมดอายุ' :
+                                       order.paymentStatus === 'canceled' ? 'ยกเลิก' : 'รอชำระ' }}
+                                </span>
+                                <span v-if="order.parcelStatus" :class="[
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full',
+                                    order.parcelStatus === 'delivered' ? 'bg-emerald-100 text-emerald-700' :
+                                    order.parcelStatus === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-amber-100 text-amber-600'
+                                ]">
+                                    {{ order.parcelStatus === 'delivered' ? 'ส่งถึงแล้ว' :
+                                       order.parcelStatus === 'shipped' ? 'จัดส่งแล้ว' : 'กำลังเตรียม' }}
+                                </span>
+                            </div>
                         </div>
 
                         <!-- First item preview -->
@@ -128,6 +168,14 @@
                                     {{ expandedOrders.has(order.id) ? 'ซ่อน' : 'รายละเอียดเพิ่มเติม' }}
                                 </button>
                                 <button
+                                    v-if="order.paymentStatus === 'pending'"
+                                    @click="goToPayment(order)"
+                                    class="text-xs px-3 py-2 rounded-xl bg-amber-500 text-white font-medium"
+                                >
+                                    ชำระเงิน
+                                </button>
+                                <button
+                                    v-else
                                     @click="reorder(order)"
                                     class="text-xs px-3 py-2 rounded-xl bg-green-500 text-white font-medium"
                                 >
@@ -170,16 +218,30 @@ export default {
             error: null,
             orders: [],
             search: '',
+            filterPaymentStatus: '',
             expandedOrders: new Set(),
         }
     },
     computed: {
         isAuthenticated() { return useAuthStore().isAuthenticated },
         userId() { return useAuthStore().user?.id },
+        statusFilterOptions() {
+            return [
+                { value: '', label: 'ทั้งหมด' },
+                { value: 'pending', label: 'รอชำระ' },
+                { value: 'success', label: 'ชำระแล้ว' },
+                { value: 'failed', label: 'ไม่สำเร็จ' },
+                { value: 'expired', label: 'หมดอายุ' },
+            ]
+        },
         filteredOrders() {
+            let result = this.orders
+            if (this.filterPaymentStatus) {
+                result = result.filter((o) => o.paymentStatus === this.filterPaymentStatus)
+            }
             const q = this.search.trim().toLowerCase()
-            if (!q) return this.orders
-            return this.orders.filter((order) =>
+            if (!q) return result
+            return result.filter((order) =>
                 order.id.toLowerCase().includes(q) ||
                 order.items.some((item) => item.title?.toLowerCase().includes(q))
             )
@@ -219,6 +281,16 @@ export default {
                 next.add(orderId)
             }
             this.expandedOrders = next
+        },
+        goToPayment(order) {
+            this.$router.push({
+                path: '/payment',
+                query: {
+                    orderId: order.id,
+                    qrImage: order.qrImage || '',
+                    amount: order.totalPrice,
+                },
+            })
         },
         reorder(order) {
             const productsStore = useProductsStore()

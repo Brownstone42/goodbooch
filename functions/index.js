@@ -9,6 +9,23 @@ setGlobalOptions({ maxInstances: 10, region: 'asia-southeast1' })
 initializeApp()
 const db = getFirestore()
 
+async function adjustStock(items, delta) {
+    for (const item of items) {
+        const productRef = db.collection('products').doc(item.productId)
+        await db.runTransaction(async (tx) => {
+            const snap = await tx.get(productRef)
+            if (!snap.exists) return
+            const variants = snap.data().variants || []
+            const updated = variants.map((v) => {
+                if (v.id !== item.variantId) return v
+                const newStock = (v.stock ?? 0) + delta * item.quantity
+                return { ...v, stock: delta < 0 ? Math.max(0, newStock) : newStock }
+            })
+            tx.update(productRef, { variants: updated })
+        })
+    }
+}
+
 // ─── Add saved card via Omise customer ───────────────────────────────────────
 
 exports.addOmiseCard = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request) => {
@@ -55,14 +72,14 @@ exports.addOmiseCard = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
     return { id: cardDoc.id, ...cardData }
 })
 
-// ─── Create Omise charge (PromptPay source or card token) ────────────────────
+// ─── Create Omise charge (PromptPay source or saved card) ────────────────────
 
 exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request) => {
     const OMISE_SECRET_KEY = process.env.OMISE_SECRET_KEY
     if (!OMISE_SECRET_KEY) throw new HttpsError('failed-precondition', 'OMISE_SECRET_KEY not set.')
 
-    const { source, items, address, shippingCost, userId } = request.data
-    if (!source) throw new HttpsError('invalid-argument', 'source is required')
+    const { source, cardId, items, address, shippingCost, userId, returnUri } = request.data
+    if (!source && !cardId) throw new HttpsError('invalid-argument', 'source or cardId is required')
     if (!items?.length) throw new HttpsError('invalid-argument', 'items is required')
 
     try {
@@ -75,6 +92,10 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
             const product = productSnap.data()
             const variant = product.variants?.find((v) => v.id === item.variantId)
             if (!variant) throw new HttpsError('not-found', `Variant ${item.variantId} not found`)
+            const available = variant.stock ?? 0
+            if (available < item.quantity) {
+                throw new HttpsError('failed-precondition', `"${item.title}" มีสินค้าเหลือเพียง ${available} ชิ้น`)
+            }
             const price = variant.price ?? 0
             totalTHB += price * item.quantity
             validatedItems.push({
@@ -90,22 +111,27 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
         }
 
         const shippingTHB = typeof shippingCost === 'number' && shippingCost > 0 ? shippingCost : 0
-        const grandTotalTHB = totalTHB + shippingTHB
+        const grandBaseTHB = totalTHB + shippingTHB
+        // 3% surcharge for credit card payments
+        const cardSurchargeTHB = cardId ? Math.round(grandBaseTHB * 0.03 * 100) / 100 : 0
+        const grandTotalTHB = grandBaseTHB + cardSurchargeTHB
 
         const omise = Omise({ secretKey: OMISE_SECRET_KEY })
-        const charge = await omise.charges.create({
-            amount: Math.round(grandTotalTHB * 100),
-            currency: 'thb',
-            description: `Goodbooch order for ${address.name}`,
-            metadata: { userId: userId || request.auth.uid },
-            source,
-        })
 
-        let qrImage = null
-        if (charge.source?.scannable_code) {
-            qrImage = charge.source.scannable_code.image.download_uri
+        // For card: look up Omise customer + card IDs upfront
+        let omiseCustomerId = null
+        let omiseCardId = null
+        if (cardId) {
+            const uid = userId || request.auth?.uid
+            const userSnap = await db.collection('users').doc(uid).get()
+            omiseCustomerId = userSnap.data()?.omiseCustomerId
+            if (!omiseCustomerId) throw new HttpsError('not-found', 'บัตรเครดิตยังไม่ได้ลงทะเบียน กรุณาเพิ่มบัตรอีกครั้ง')
+            const cardSnap = await db.collection('users').doc(uid).collection('cards').doc(cardId).get()
+            if (!cardSnap.exists) throw new HttpsError('not-found', 'ไม่พบข้อมูลบัตร')
+            omiseCardId = cardSnap.data().omiseCardId
         }
 
+        // Write order first — card payment needs orderId for 3DS return_uri
         const orderRef = await db.collection('orders').add({
             userId: userId || null,
             customerName: address.name,
@@ -115,20 +141,64 @@ exports.createCharge = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (request)
             items: validatedItems,
             subtotalPrice: totalTHB,
             shippingPrice: shippingTHB,
+            cardSurcharge: cardSurchargeTHB,
             totalPrice: grandTotalTHB,
             paymentStatus: 'pending',
             parcelStatus: null,
-            omiseChargeId: charge.id,
-            paymentType: 'promptpay',
-            qrImage: qrImage || null,
+            stockDecremented: false,
+            omiseChargeId: null,
+            paymentType: cardId ? 'credit_card' : 'promptpay',
+            qrImage: null,
             createdAt: FieldValue.serverTimestamp(),
         })
+
+        await adjustStock(validatedItems, -1)
+        await orderRef.update({ stockDecremented: true })
+
+        // Build charge payload
+        const CHARGE_EXPIRY_SECONDS = 15 * 60
+        const chargePayload = {
+            amount: Math.round(grandTotalTHB * 100),
+            currency: 'thb',
+            description: `Goodbooch order for ${address.name}`,
+            metadata: { userId: userId || request.auth?.uid },
+        }
+
+        if (source) {
+            chargePayload.source = source
+            chargePayload.expires_at = new Date(Date.now() + CHARGE_EXPIRY_SECONDS * 1000).toISOString()
+        } else {
+            chargePayload.customer = omiseCustomerId
+            chargePayload.card = omiseCardId
+            if (returnUri) chargePayload.return_uri = `${returnUri}?orderId=${orderRef.id}`
+        }
+
+        const charge = await omise.charges.create(chargePayload)
+
+        // Update order with charge info
+        let qrImage = null
+        const updateData = { omiseChargeId: charge.id }
+
+        if (source && charge.source?.scannable_code) {
+            qrImage = charge.source.scannable_code.image.download_uri
+            updateData.qrImage = qrImage
+        }
+
+        if (cardId && charge.status === 'successful') {
+            updateData.paymentStatus = 'success'
+            updateData.parcelStatus = 'processing'
+            updateData.paidAt = FieldValue.serverTimestamp()
+        }
+
+        await orderRef.update(updateData)
 
         return {
             orderId: orderRef.id,
             chargeId: charge.id,
             qrImage,
             amount: grandTotalTHB,
+            authorizeUri: charge.authorize_uri || null,
+            paymentStatus: cardId && charge.status === 'successful' ? 'success' : 'pending',
         }
     } catch (error) {
         console.error('createCharge error:', error)
@@ -167,6 +237,10 @@ exports.checkPaymentStatus = onCall({ secrets: ['OMISE_SECRET_KEY'] }, async (re
                 paidAt: newPaymentStatus === 'success' ? FieldValue.serverTimestamp() : null,
             }
             if (newPaymentStatus === 'success') updateData.parcelStatus = 'processing'
+            if (['failed', 'expired'].includes(newPaymentStatus) && order.stockDecremented) {
+                await adjustStock(order.items, +1)
+                updateData.stockDecremented = false
+            }
             await orderSnap.ref.update(updateData)
         }
 
@@ -201,20 +275,26 @@ exports.omiseWebhook = onRequest({ secrets: ['OMISE_SECRET_KEY'] }, async (req, 
 
         let newPaymentStatus
         if (charge.status === 'successful') newPaymentStatus = 'success'
-        else if (charge.status === 'failed' && charge.failure_code === 'expired_charge') newPaymentStatus = 'expired'
+        else if (charge.status === 'expired' || (charge.status === 'failed' && charge.failure_code === 'expired_charge')) newPaymentStatus = 'expired'
         else newPaymentStatus = 'failed'
 
         const snap = await db.collection('orders').where('omiseChargeId', '==', chargeId).limit(1).get()
         if (snap.empty) {
             console.warn('[webhook] no order found for chargeId:', chargeId)
         } else {
+            const orderDoc = snap.docs[0]
+            const orderData = orderDoc.data()
             const updateData = {
                 paymentStatus: newPaymentStatus,
                 paidAt: charge.status === 'successful' ? FieldValue.serverTimestamp() : null,
             }
             if (newPaymentStatus === 'success') updateData.parcelStatus = 'processing'
-            await snap.docs[0].ref.update(updateData)
-            console.log('[webhook] order', snap.docs[0].id, 'updated to:', newPaymentStatus)
+            if (['failed', 'expired'].includes(newPaymentStatus) && orderData.stockDecremented) {
+                await adjustStock(orderData.items, +1)
+                updateData.stockDecremented = false
+            }
+            await orderDoc.ref.update(updateData)
+            console.log('[webhook] order', orderDoc.id, 'updated to:', newPaymentStatus)
         }
     } catch (err) {
         console.error('Webhook Error:', err)
